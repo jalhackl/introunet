@@ -1,0 +1,62 @@
+import sys
+sys.path.insert(0, './')
+
+import sstar
+import os
+import demes
+import numpy as np
+import pandas as pd
+from scipy.stats import norm
+from scipy.stats import nbinom
+
+from intronets_format import *
+from intronets_hdf import *
+from intronets_hdf_extended import *
+from intronets_process import *
+from intronets_windows import *
+
+
+from intronets_run import *
+
+from intronets_train import *
+
+
+
+configfile: "config_intronets_archie1.yaml"
+
+model_name = "archie"
+
+output_dir = config["output_dir"]
+
+
+demo_model_file = config["simulation_yamls"]["archie"]
+
+nrep = 1000
+nref = 50
+ntgt= 50
+ref_id = config["ref_ids"]["archie"]
+tgt_id = config["tgt_ids"]["archie"]
+src_id = config["src_ids"]["archie"]
+seq_len = config["seq_len"]
+mut_rate = config["mutation_rates"]["archie"]
+rec_rate = config["recombination_rates"]["archie"]
+thread = 32
+output_prefix = "archie_rep_model"
+output_dir = config["output_dir"]
+seed = config["seed"]
+
+hdf_filename = config["hdf_filename"]
+#total rep indicates the total number of replicates!!!
+total_rep =  config["total_rep"]
+nrep =  config["nrep"]
+
+
+prefixname = "poschannel_scaled_1000k_random_wo"
+hdf_filename = prefixname +".h5"
+output_dir = prefixname + "normal_net"
+
+
+rule all:
+    run:
+        train_model_intronets(None, hdf_filename, output_dir, net="multi", n_classes=1, pickle_load=False, learning_rate = 0.001, batch_size=32, filter_multiplier=1, label_noise=0.01, n_early=10, label_smooth=True)
+

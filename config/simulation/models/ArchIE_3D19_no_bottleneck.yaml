@@ -1,0 +1,22 @@
+doi:
+    - https://doi.org/10.1371/journal.pgen.1008175
+time_units: generations
+demes:
+    - name: Anc
+      epochs:
+          - {end_time: 2500, start_size: 10000}
+    - name: Ghost
+      ancestors: [Anc]
+      start_time: 12000
+      epochs:
+          - {end_time: 0, start_size: 10000}
+    - name: Ref
+      ancestors: [Anc]
+      epochs:
+          - {end_time: 0, start_size: 10000}
+    - name: Tgt
+      ancestors: [Anc]
+      epochs:
+          - {end_time: 0, start_size: 10000}
+pulses:
+    - {sources: [Ghost], dest: Tgt, time: 2000, proportions: [0.02]}

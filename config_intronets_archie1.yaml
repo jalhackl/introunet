@@ -1,0 +1,33 @@
+output_dir: "intermediate_resb"
+#replicates: 10
+seed: None
+seq_len: 50000
+1src_demo_models: ['archie']
+
+folder_names: ['archie']
+
+mutation_rates: {'archie': 1.25e-8}
+recombination_rates: {'archie': 1e-8}
+
+src_ids: {'archie': 'Ghost'}
+ref_ids: {'archie': 'Ref'}
+tgt_ids: {'archie':'Tgt'}
+
+simulation_yamls: {'archie' : 'ArchIE_3D19.yaml'}
+
+#scenarios: ["true", "const", "ref_tgt_only"]
+nref: 50
+ntgt: 50
+nrep: 100
+total_rep: 1000
+
+ploidy: 2
+
+polymorphisms: 128
+stepsize: 16
+
+remove_samples_wo_introgression: True
+
+threads: 6
+
+hdf_filename: "hdf_1b.h5"

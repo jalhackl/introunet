@@ -1,0 +1,12 @@
+output_dir: "results"
+replicates: 10
+seed: 12345
+seq_len: 200
+demo_models: [
+        { "id": "ArchIE_3D19", "mut_rate": 1.25e-8, "rec_rate": 1e-8, "ref_id": "Ref", "tgt_id": "Tgt", "src_id": "Ghost"}, 
+        { "id": "HumanNeanderthal_3G21", "mut_rate": 1.29e-8, "rec_rate": 1e-8, "ref_id": "YRI", "tgt_id": "CEU", "src_id": "Nea"}, 
+        { "id": "BonoboGhost_4K19", "mut_rate": 1.2e-8, "rec_rate": 0.7e-8, "ref_id": "Western", "tgt_id": "Bonobo", "src_id": "Ghost"},
+        { "id": "GorillaGhost_5P23", "mut_rate": 1.235e-8, "rec_rate": 0.94e-8, "ref_id": "WLG", "tgt_id": "ELG", "src_id": "Ghost"}
+]
+
+sprime_exec: "ext/SPrime/sprime.jar"

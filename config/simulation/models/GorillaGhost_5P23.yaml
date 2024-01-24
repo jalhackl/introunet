@@ -1,0 +1,48 @@
+doi:
+    - https://doi.org/10.1038/s41559-023-02145-2 # Supplementary Table S1
+time_units: generations
+demes:
+    - name: Anc
+      epochs:
+          - {end_time: 180072, start_size: 35381} # time: 3421360 / 19 = 180071.5
+    - name: Ghost
+      ancestors: [Anc]
+      epochs:
+          - {end_time: 2000, start_size: 35831}
+    - name: Anc_Gor
+      ancestors: [Anc]
+      epochs:
+          - {end_time: 50815, start_size: 14363} # time: 965481 / 19 = 50814.7
+    - name: Anc_East_Gor
+      ancestors: [Anc_Gor]
+      epochs:
+          - {end_time: 792, start_size: 5325} # time: 15048 / 19 = 792
+    - name: Anc_West_Gor
+      ancestors: [Anc_Gor]
+      epochs:
+          - {end_time: 23911, start_size: 98135} # time: 454313 / 19 = 23911.2
+    - name: MG
+      ancestors: [Anc_East_Gor]
+      epochs:
+          - {end_time: 490, start_size: 3009} # time: 9310 / 19 = 490
+          - {end_time: 480, start_size: 115} # time: 9120 / 19 = 480
+          - {end_time: 0, start_size: 2158}
+    - name: ELG
+      ancestors: [Anc_East_Gor]
+      epochs:
+          - {end_time: 380, start_size: 21982} # time: 7220 / 19 = 380
+          - {end_time: 2, start_size: 243} # time: 30 / 19 = 1.5
+          - {end_time: 0, start_size: 20894}
+    - name: WLG
+      ancestors: [Anc_West_Gor]
+      epochs:
+          - {end_time: 2105, start_size: 48288} # time: 40896 / 19 = 2152.4
+          - {end_time: 0, start_size: 64748}
+    - name: CR
+      ancestors: [Anc_West_Gor]
+      epochs:
+          - {end_time: 0, start_size: 14558}
+migrations:
+    - {source: WLG, dest: Anc_East_Gor, start_time: 1790, end_time: 1789, rate: 0.002768} # start_time: 34019 / 19 = 1790.4; end_time: 34000 / 19 = 1789
+    - {source: Anc_East_Gor, dest: WLG, start_time: 1790, end_time: 1789, rate: 0.00827}
+    - {source: Ghost, dest: Anc_East_Gor, start_time: 2016, end_time: 2015, rate: 0.0247} # start_time: 38300 / 19 = 2015.7; end_time: 38281 / 19 = 2014.7

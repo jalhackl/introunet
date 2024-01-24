@@ -1,0 +1,146 @@
+import sys
+sys.path.insert(0, './')
+
+import sstar
+import os
+import demes
+import numpy as np
+import pandas as pd
+from scipy.stats import norm
+from scipy.stats import nbinom
+
+from intronets_format import *
+from intronets_hdf import *
+from intronets_hdf_extended import *
+from intronets_process import *
+from intronets_windows import *
+
+
+from intronets_run import *
+
+from sstar.simulate import simulate
+
+
+
+configfile: "config_intronets_archie1.yaml"
+
+model_name = "archie"
+output_dir = config["output_dir"]
+
+
+demo_model_file = config["simulation_yamls"]["archie"]
+
+nrep = 1000
+nref = config["nref"]
+ntgt= config["ntgt"]
+ref_id = config["ref_ids"]["archie"]
+tgt_id = config["tgt_ids"]["archie"]
+src_id = config["src_ids"]["archie"]
+seq_len = config["seq_len"]
+mut_rate = config["mutation_rates"]["archie"]
+rec_rate = config["recombination_rates"]["archie"]
+output_prefix = "archie_rep_model"
+output_dir = config["output_dir"]
+seed = config["seed"]
+
+hdf_filename = config["hdf_filename"]
+#total rep indicates the total number of replicates!!!
+total_rep =  100000
+nrep =  10000
+
+nrep_folder = total_rep / nrep
+
+hdf_filename = "100k_random_wo.h5"
+new_hdf_file = hdf_filename
+output_dir = "100k_random_wo"
+
+ploidy = 2
+thread = 64
+
+is_phased = True
+
+create_extras = True
+no_window=False
+
+remove_intermediate_data=True
+remove_samples_wo_introgression=True
+random_restrict=True
+random_el=1
+one_target=True
+polymorphisms=128
+stepsize=16
+only_first=True
+return_data = False
+
+rule all:
+    run:
+        if create_extras == True:
+            poschannel_hdf_file = "poschannel_" + new_hdf_file
+            poschannel_scaled_hdf_file = "poschannel_scaled_" + new_hdf_file
+
+            gradient_hdf_file = "gradient_" + new_hdf_file
+            fwbw_hdf_file = "fwbw_" + new_hdf_file
+
+        nrep_folder = total_rep / nrep
+        if nrep_folder < 1:
+            nrep_folder = 1
+
+
+        #if h5-file already exists, delete it
+        if os.path.exists(new_hdf_file):
+            os.remove(new_hdf_file)
+
+        if create_extras == True:
+            if os.path.exists(poschannel_hdf_file):
+                os.remove(poschannel_hdf_file)
+            if os.path.exists(poschannel_scaled_hdf_file):
+                os.remove(poschannel_hdf_file)
+            if os.path.exists(gradient_hdf_file):
+                os.remove(gradient_hdf_file)
+            if os.path.exists(fwbw_hdf_file):
+                os.remove(fwbw_hdf_file)
+
+
+
+        if return_data == True:
+            collected_all_entries = []
+
+        gn = 0
+        for i in range(int(nrep_folder)):
+            print("current counter i", i)
+            new_output_dir = output_dir + str(i)
+
+            if isinstance(seed, int):
+                shell("sstar simulate --demes {demo_model_file} --replicate {nrep} --nref {nref} --ntgt {ntgt} --ref-id {ref_id} --tgt-id {tgt_id} --src-id {src_id} --mut-rate {mut_rate} --rec-rate {rec_rate} --seq-len {seq_len} --output-prefix {output_prefix} --output-dir {new_output_dir} --thread {thread} --seed {seed} --keep-simulated-data --phased")
+            else:
+                print("no seed is used")
+                shell("sstar simulate --demes {demo_model_file} --replicate {nrep} --nref {nref} --ntgt {ntgt} --ref-id {ref_id} --tgt-id {tgt_id} --src-id {src_id} --mut-rate {mut_rate} --rec-rate {rec_rate} --seq-len {seq_len} --output-prefix {output_prefix} --output-dir {new_output_dir} --thread {thread} --keep-simulated-data --phased")
+
+            print("simprocess accomplished")
+
+
+            if no_window == False:
+                all_entries = process_vcf_df_windowed_multiproc(new_output_dir, polymorphisms=polymorphisms, stepsize=stepsize, random_reg=random_restrict, random_el=random_el, ignore_zero_introgression=remove_samples_wo_introgression, only_first=only_first, one_target=one_target)
+            else:
+                all_entries = process_vcf_df_multiproc(new_output_dir, polymorphisms=polymorphisms, remove_samples_wo_introgression=remove_samples_wo_introgression, random_restrict=random_restrict, one_target=one_target)
+
+            if return_data == True:
+                collected_all_entries.extend(all_entries)
+
+            if no_window == False:
+
+                if create_extras == True:
+                    create_hdf_table_extrakey_chunk3_windowed_poschannel(poschannel_hdf_file, all_entries, start_nr=gn)
+                    create_hdf_table_extrakey_chunk3_windowed_poschannel(poschannel_scaled_hdf_file, all_entries, divide_by_seq_length=True, start_nr=gn)
+                    create_hdf_table_extrakey_chunk3_windowed_gradient(gradient_hdf_file, all_entries, start_nr=gn)
+                    create_hdf_table_extrakey_chunk3_windowed_forward_backward(fwbw_hdf_file, all_entries, start_nr=gn)
+
+                gn = create_hdf_table_extrakey_chunk3_windowed(new_hdf_file, all_entries, start_nr=gn)
+            else:
+
+                gn = create_hdf_table_extrakey_chunk3_groups(new_hdf_file, all_entries, start_nr=gn)
+
+
+
+            if remove_intermediate_data == True:
+                shutil.rmtree(new_output_dir)
