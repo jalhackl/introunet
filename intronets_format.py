@@ -5,18 +5,29 @@ from seriate import seriate
 import numpy as np
 import pandas as pd
 import allel
+#import utils
 import os
 from pathlib import Path
 
+#import intronets_windows
+#import intronets_seriation
+#import intronets_hdf
+#from intronets_seriation import *
+#from intronets_windows import *
+#from intronets_hdf import *
 
-def get_vcf_subfolders(folder):
-    dir_list = os.listdir(folder)  
-    for idir, directory in enumerate(dir_list):
-        dir_list[idir] = os.path.join(folder,directory)
-    return dir_list
+
 
 
 def get_vcf_bed_files(folder, ignore_zero_introgression = True):
+    """
+    Description:
+        this function returns the vcf and bed files of the input folder
+
+    Arguments:
+        folder str: folder containing files
+        ignore_zero_introgression bool: if True, replicates without introgression are discarded
+    """
     
     vcf_files = []
     bed_files = []
@@ -41,9 +52,16 @@ def get_vcf_bed_files(folder, ignore_zero_introgression = True):
 
 
 def get_vcf_bed_folder(folder, ignore_zero_introgression = True):
+    """
+    Description:
+        this function returns the vcf and bed files of all subdirectories of the input folder
+
+    Arguments:
+        folder str: folder containing files
+        ignore_zero_introgression bool: if True, replicates without introgression are discarded
+    """
     
-    dir_list = os.listdir(folder)    
-    
+    dir_list = [d for d in os.listdir(folder) if os.path.isdir(os.path.join(folder,d))]  
     
     vcf_files = []
     bed_files = []
@@ -69,141 +87,29 @@ def get_vcf_bed_folder(folder, ignore_zero_introgression = True):
     return vcf_files, bed_files
 
 
-def process_vcf_one_folder(folder):
-    vcf_files, bed_files = get_vcf_bed_files(folder)
-    
-    haplos_list = []
-    intros_list = []
-    pos_list = []
-    
-    for vcf_file, bed_file in zip(vcf_files, bed_files):
-        combined_haplos, combined_intros, newpos = format_from_vcf(vcf_file, bed_file)
-        
-        haplos_list.append(combined_haplos)
-        intros_list.append(combined_intros)
-        pos_list.append(newpos)
-        
-    return haplos_list, intros_list, pos_list
 
 
-
-def process_vcf(folder):
-    vcf_files, bed_files = get_vcf_bed_folder(folder)
-    
-    haplos_list = []
-    intros_list = []
-    pos_list = []
-    
-    for vcf_file, bed_file in zip(vcf_files, bed_files):
-        combined_haplos, combined_intros, newpos = format_from_vcf(vcf_file, bed_file)
-        
-        haplos_list.append(combined_haplos)
-        intros_list.append(combined_intros)
-        pos_list.append(newpos)
-        
-    return haplos_list, intros_list, pos_list
+def format_from_vcf_df(vcf_file, bed_file, return_all=True, upsample=112/2, uniform_upsampling=True, ploidy=2, ref_size=50, target_size=50, select_populations=True, merge_haplotypes=False, compute_scaled_positions=False, fragment_length=50000, add_same_number=False):
+    """
+    Description:
+        loading formatting of the input vcf and bed file 
+        lists containing the haplotype arrays, the introgression arrays and the positions are returned
+        if return_all == True (default), the following dataframes are returned:
+        pop_df_ref: reference haplotypes
+        pop_df_target: target haplotypes
+        intro_df_ref: contains information if reference haplotype is introgressed (0: no / 1: true); for unidirectional introgression, it only contains 0s
+        intro_df_target: contains information if target haplotype is introgressed (0: no / 1: true)
+        newsamples_ref: name of the individuals in the reference population
+        newsamples_target: name of the individuals in the target population
+        newpos: position of the haplotype
 
 
-def extract_genotype_matrix(vcf_file, merge_haplotypes=False):
-    allel_vcf = allel.read_vcf(vcf_file)
-    
-    newar = allel_vcf["calldata/GT"]
-    newpos = allel_vcf["variants/POS"]
-    newsamples = allel_vcf["samples"]
-    
-    newar_haplo0 = newar[:,:,0]
-    newar_haplo1 = newar[:,:,1]
-    newar_haplo0T = newar_haplo0.T
-    newar_haplo1T = newar_haplo1.T
-    
-    newar_haplo = np.array([newar_haplo0T, newar_haplo1T])
-    
-    return newpos, newsamples, newar_haplo
-
-
-
-def format_from_vcf(vcf_file, bed_file, pop_size=None, turn_populations=True, merge_haplotypes=False, compute_scaled_positions=True, fragment_length=50000):
-    allel_vcf = allel.read_vcf(vcf_file)
-    
-    newar = allel_vcf["calldata/GT"]
-    newpos = allel_vcf["variants/POS"]
-    newsamples = allel_vcf["samples"]
-    
-
-    newar_haplo0 = newar[:,:,0]
-    newar_haplo1 = newar[:,:,1]
-    newar_haplo0T = newar_haplo0.T
-    newar_haplo1T = newar_haplo1.T
+    Arguments:
+        vcf_file str: folder containing files
+        bed_file str: folder containing files
+    """
     
     
-    newar_haplo = np.array([newar_haplo0T, newar_haplo1T])
-    
-    true_tract_data = pd.read_csv(bed_file, sep="\t", header=None, names=['chr', 'start', 'end', 'hap', 'ind'])
-
-    true_tract_data["hap"] = true_tract_data["hap"].str.replace("hap_", "")
-    true_tract_data["ind"] = true_tract_data["ind"].str.replace("tsk_", "")
-    true_tract_data_arr = true_tract_data.to_numpy(dtype=int)
-    
-    
-    intro_array = np.zeros_like(newar_haplo)
-    for entry in true_tract_data_arr:
-
-        curr_ind = entry[-1]
-        curr_haplo = entry[-2]
-
-        curr_start = entry[1]
-        curr_end = entry[2]
-
-        for ipos, pos in enumerate(newpos):
-            if pos >= curr_start and pos < curr_end:
-
-                intro_array[curr_haplo][curr_ind][ipos] = 1 
-                
-                
-    combined_haplos = np.array([row for row_group in zip(newar_haplo[0], newar_haplo[1]) for row in row_group])
-    combined_intros = np.array([row for row_group in zip(intro_array[0], intro_array[1]) for row in row_group])
-
-    
-    if turn_populations == True:
-        combined_haplos_len = len(combined_haplos)
-        
-        if pop_size == None:
-            half_len = int(combined_haplos_len / 2)
-        else:
-            half_len = int(combined_haplos_len - pop_size)
-
-            
-        combined_haplos_part0 = combined_haplos[0:half_len]
-        combined_haplos_part1 = combined_haplos[half_len:]
-        
-        combined_intros_part0 = combined_intros[0:half_len]
-        combined_intros_part1 = combined_intros[half_len:]
-        
-        new_samples_part0 = newsamples[0:int(half_len/2)]
-        new_samples_part1 = newsamples[int(half_len/2):]
-
-        combined_haplos = np.concatenate((combined_haplos_part1, combined_haplos_part0), axis=0)
-        combined_intros = np.concatenate((combined_intros_part1, combined_intros_part0), axis=0)
-        
-        combined_samples = np.concatenate((new_samples_part1, new_samples_part0), axis=0)
-
-    
-    
-    if compute_scaled_positions == True:
-        scaled_pos = []
-        for pos in newpos:
-            scaled_pos.append(pos/fragment_length)
-            
-        return combined_haplos, combined_intros, scaled_pos
-    
-    
-                    
-    return combined_haplos, combined_intros, newpos
-
-
-
-
-def format_from_vcf_df(vcf_file, bed_file, return_all=True, return_df=False, upsample=112/2, uniform_upsampling=True, ploidy=2, ref_size=50, target_size=50, select_populations=True, merge_haplotypes=False, compute_scaled_positions=True, fragment_length=50000, add_same_number=False):
     #'upsample' indicates the total number of individuals per group (reference / target)
     if upsample != None:
         upsample = upsample * ploidy
@@ -220,11 +126,6 @@ def format_from_vcf_df(vcf_file, bed_file, return_all=True, return_df=False, ups
     newar_alt = np.swapaxes(newar.T, 0, 1)
 
     
-    ref_size_full = ref_size * ploidy
-    target_size_full = target_size * ploidy
-    
-
-    
     newsamples_int = [[int(s) for s in newsample.split("_") if s.isdigit()] for newsample in newsamples]
     newsamples_int = [item for sublist in newsamples_int for item in sublist]
     
@@ -232,14 +133,6 @@ def format_from_vcf_df(vcf_file, bed_file, return_all=True, return_df=False, ups
     newsamples_target = newsamples_int[ref_size:]
     
     
-    newar_haplo0 = newar[:,:,0]
-    newar_haplo1 = newar[:,:,1]
-    newar_haplo0T = newar_haplo0.T
-    newar_haplo1T = newar_haplo1.T
-    
-    
-    newar_haplo = np.array([newar_haplo0T, newar_haplo1T])
-
     true_tract_data = pd.read_csv(bed_file, sep="\t", header=None, names=['chr', 'start', 'end', 'sample'])
 
 
@@ -288,12 +181,6 @@ def format_from_vcf_df(vcf_file, bed_file, return_all=True, return_df=False, ups
         for i in range(ploidy):
             target_list.append([curr_sample, i, entry[i]])
                 
-    
-    if compute_scaled_positions == True:
-        scaled_pos = []
-        for pos in newpos:
-            scaled_pos.append(pos/fragment_length)
-            
     
     pop_df = pd.DataFrame(pop_list, columns=["ind", "hap", "genotype"])
     intro_df = pd.DataFrame(target_list, columns=["ind", "hap", "genotype"])

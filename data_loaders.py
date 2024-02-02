@@ -168,18 +168,6 @@ class H5UDataGenerator(object):
         self.ix = 0
         self.ix_val = 0
 
-        print("show properties")
-        print(self.keys)
-        print("valkeys")
-        print(self.val_keys)
-        print("length")
-        print(self.length)
-        print(self.n_per)
-
-        print("and new: pred_pop")
-        print(pred_pop)
-
-        #print("flippi2b")
             
     def define_lengths(self):
         self.length = len(self.keys) // (self.batch_size // self.chunk_size)
@@ -194,14 +182,10 @@ class H5UDataGenerator(object):
             y = np.array(self.ifile[key]['y'])
             x = x.astype(np.int32)
 
-            #flipp
-            #x = np.flip(x, 1)
             
             X.append(x)
             Y.append(y)
 
-        #print("i am big Y")
-        #print(Y)
         Y = np.concatenate(Y)
         
         if self.label_smooth:
@@ -212,7 +196,6 @@ class H5UDataGenerator(object):
             
         self.ix += self.n_per
 
-        #X = X.astype(np.int32)
         return torch.FloatTensor(np.concatenate(X)), torch.FloatTensor(Y)
     
     def on_epoch_end(self):
@@ -229,9 +212,6 @@ class H5UDataGenerator(object):
             x = np.array(self.ifile[key]['x_0'])
             y = np.array(self.ifile[key]['y'])
             x = x.astype(np.int32)
-
-            #flipp
-            #x = np.flip(x, 1)
             
             X.append(x)
             Y.append(y)

@@ -61,7 +61,7 @@ import time
 
 
 
-def train_model_intronets(weights, ifile, odir, net="default", n_classes=1, pickle_load=False, learning_rate = 0.001, batch_size=32, filter_multiplier=1, label_noise=0.01, n_early=10, n_epochs = 100, label_smooth=True):
+def train_model_intronets(weights, ifile, odir, net="default", n_classes=1, pickle_load=False, learning_rate = 0.001, batch_size=32, filter_multiplier=1, label_noise=0.01, n_early=10, n_epochs = 100, label_smooth=True, polymorphisms=128, compute_prec_rec=True):
     start_time = time.time()
     
     if not os.path.exists(odir):
@@ -78,6 +78,7 @@ def train_model_intronets(weights, ifile, odir, net="default", n_classes=1, pick
     log_file.write('\n')
     
 
+    #net architecture is selected, 'default' indicates the net from the intronets-paper
     if net == "default":
         model = NestedUNet(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False)
     elif net == "multi":
@@ -85,15 +86,15 @@ def train_model_intronets(weights, ifile, odir, net="default", n_classes=1, pick
     elif net == "multi_fwbw":
         model = NestedUNet(int(n_classes), 4, filter_multiplier = float(filter_multiplier), small = False)
     elif net == "lstm":
-        model = NestedUNetLSTM(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False)
+        model = NestedUNetLSTM(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False, polymorphisms=polymorphisms)
     elif net == "gru":
-        model = NestedUNetLSTM(int(n_classes), 2, filter_multiplier = float(filter_multiplier), create_gru=True, small = False)
+        model = NestedUNetLSTM(int(n_classes), 2, filter_multiplier = float(filter_multiplier), create_gru=True, small = False, polymorphisms=polymorphisms)
     elif net == "lstm_fwbw":
-        model = NestedUNetLSTM_fwbw(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False)
+        model = NestedUNetLSTM_fwbw(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False, polymorphisms=polymorphisms)
     elif net == "gru_fwbw":
-        model = NestedUNetLSTM_fwbw(int(n_classes), 2, filter_multiplier = float(filter_multiplier), create_gru=True, small = False)
+        model = NestedUNetLSTM_fwbw(int(n_classes), 2, filter_multiplier = float(filter_multiplier), create_gru=True, small = False, polymorphisms=polymorphisms)
     elif net == "extra":
-        model = NestedUNetExtraPos(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False)
+        model = NestedUNetExtraPos(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False, polymorphisms=polymorphisms)
     else:
         model = NestedUNet(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False)
 
@@ -101,8 +102,6 @@ def train_model_intronets(weights, ifile, odir, net="default", n_classes=1, pick
     print(model, file = log_file, flush=True)
     model = model.to(device)
     
-    n_steps = None
-
     #not fully implemented yet - and probably not necessary, because pickled numpy arrays are preferably not used
     if pickle_load == True:
         pickle_file = ifile
@@ -137,7 +136,7 @@ def train_model_intronets(weights, ifile, odir, net="default", n_classes=1, pick
         #all_values = []
         all_counts0 = 0
         all_counts1 = 0
-        #computation of the positive negative ratio - for large files it is perhaps not necessary to check each key/window
+        #computation of the positive negative ratio - for large files it is perhaps not necessary to check each key/window ('law of large numbers')
         for key in keys:
             dataset_intro = load_file[key]["y"]
 
@@ -186,6 +185,7 @@ def train_model_intronets(weights, ifile, odir, net="default", n_classes=1, pick
         history['val_acc'] = []
         history['epoch_time'] = []
 
+        #training commences
         print('training...')
         for ix in range(int(n_epochs)):
             t0 = time.time()
@@ -216,26 +216,30 @@ def train_model_intronets(weights, ifile, odir, net="default", n_classes=1, pick
                 losses.append(loss.item())
 
                 # compute accuracy in CPU with sklearn
+
+                #THIS IS PROBABLY VERY TIMECONSUMING AND SLOWS DOWN THE PROCESS - one should compare the results
                 y_pred = np.round(expit(y_pred.detach().cpu().numpy().flatten()))
                 y = np.round(y.detach().cpu().numpy().flatten())
 
                 # append metrics for this epoch
                 accuracies.append(accuracy_score(y.flatten(), y_pred.flatten()))
 
-                train_precision_score = precision_score(y.flatten(), y_pred.flatten())
-                train_recall_score = recall_score(y.flatten(), y_pred.flatten())
+                #precision and recall during the training is nice, but at least if computed on CPU very expensive
+                if compute_prec_rec == True:
+                    train_precision_score = precision_score(y.flatten(), y_pred.flatten())
+                    train_recall_score = recall_score(y.flatten(), y_pred.flatten())
 
-                precisions.append(train_precision_score)
-                recalls.append(train_recall_score)
+                    precisions.append(train_precision_score)
+                    recalls.append(train_recall_score)
 
-                if (ij + 1) % 100 == 0:
+                if (ij + 1) % 1000 == 0:
                     logging.info(
                         'root: Epoch {0}, step {3}: got loss of {1}, acc: {2}'.format(ix, np.mean(losses),
                                                                                     np.mean(accuracies), ij + 1))
                     print('root: Epoch {0}, step {3}: got loss of {1}, acc: {2}'.format(ix, np.mean(losses),
                                                                                     np.mean(accuracies), ij + 1), file=log_file, flush=True)
-
-                    print("and precision: " + str(np.mean(precisions)) + ", recall: " + str(np.mean(recalls)), file=log_file, flush=True)
+                    if compute_prec_rec == True:
+                        print("and precision: " + str(np.mean(precisions)) + ", recall: " + str(np.mean(recalls)), file=log_file, flush=True)
 
             model.eval()
 
@@ -265,13 +269,14 @@ def train_model_intronets(weights, ifile, odir, net="default", n_classes=1, pick
                     val_accs.append(accuracy_score(y.flatten(), y_pred.flatten()))
                     val_losses.append(loss.detach().item())
 
+                    #see above: however, at least for validation it would be good to know precision and recall
+                    if compute_prec_rec == True:      
 
+                        val_precision_score = precision_score(y.flatten(), y_pred.flatten())
+                        val_recall_score = recall_score(y.flatten(), y_pred.flatten())
 
-                    val_precision_score = precision_score(y.flatten(), y_pred.flatten())
-                    val_recall_score = recall_score(y.flatten(), y_pred.flatten())
-
-                    val_precisions.append(val_precision_score)
-                    val_recalls.append(val_recall_score)
+                        val_precisions.append(val_precision_score)
+                        val_recalls.append(val_recall_score)
 
 
             val_loss = np.mean(val_losses)
@@ -280,7 +285,9 @@ def train_model_intronets(weights, ifile, odir, net="default", n_classes=1, pick
                 'root: Epoch {0}, got val loss of {1}, acc: {2} '.format(ix, val_loss, np.mean(val_accs)))
 
             print('root: Epoch {0}, got val loss of {1}, acc: {2} '.format(ix, val_loss, np.mean(val_accs)), file=log_file, flush=True)
-            print("and valprecision: " + str(np.mean(val_precisions)) + ", valrecall: " + str(np.mean(val_recalls)), file=log_file, flush=True)
+
+            if compute_prec_rec == True:      
+                print("and valprecision: " + str(np.mean(val_precisions)) + ", valrecall: " + str(np.mean(val_recalls)), file=log_file, flush=True)
 
 
             history['epoch'].append(ix)

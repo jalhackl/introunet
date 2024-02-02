@@ -18,6 +18,8 @@ import torch
 
 import h5py
 
+import sys
+#sys.path.insert(0, os.path.join(os.getcwd(), 'src/models'))
 
 from layers import *
 from data_loaders import H5UDataGenerator
@@ -32,27 +34,11 @@ import random
 from scipy.interpolate import interp1d
 from evaluate_unet_windowed_orig import gaussian
 
+from intronets_evaluate import *
 
 
 
-def get_chunk(entries, both_y=False):
-    indices = np.array( [entry[4] for entry in entries])
-    ix = np.array([entry[-1] for entry in entries])
-    x = np.array([np.stack(entry[0:2]) for entry in entries])
-
-    if both_y == False:
-        y = np.array([entry[2] for entry in entries])
-    else:
-        y = np.array([np.stack(entry[2:4]) for entry in entries])
-    pos = [entry[-2] for entry in entries]
-    startpos = [poss[0] for poss in pos]
-    endpos = [poss[1] for poss in pos]
-
-    return x,y,indices,ix,startpos,endpos
-
-
-
-def predict_model_intronets(weights, ifile,  net="default", n_classes=1, chunk_size=4, smooth=False, filter_multiplier=1, sigma = 30, return_full = False, row_wise_addition=True):
+def predict_model_intronets(weights, ifile,  net="default", n_classes=1, chunk_size=4, smooth=False, filter_multiplier=1, sigma = 30, return_full = False, row_wise_addition=True, polymorphisms=128, haplotype_input=True, indiv_cutoff=True):
     if torch.cuda.is_available():
         device = torch.device('cuda')
     else:
@@ -60,24 +46,25 @@ def predict_model_intronets(weights, ifile,  net="default", n_classes=1, chunk_s
     #device = torch.device('cpu')
 
 
+
     if net == "default":
-        model = NestedUNet(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False)
+        model = NestedUNet(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False, polymorphisms=polymorphisms)
     elif net == "multi":
-        model = NestedUNet(int(n_classes), 3, filter_multiplier = float(filter_multiplier), small = False)
+        model = NestedUNet(int(n_classes), 3, filter_multiplier = float(filter_multiplier), small = False, polymorphisms=polymorphisms)
     elif net == "multi_fwbw":
-        model = NestedUNet(int(n_classes), 4, filter_multiplier = float(filter_multiplier), small = False)
+        model = NestedUNet(int(n_classes), 4, filter_multiplier = float(filter_multiplier), small = False, polymorphisms=polymorphisms)
     elif net == "lstm":
-        model = NestedUNetLSTM(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False)
+        model = NestedUNetLSTM(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False, polymorphisms=polymorphisms)
     elif net == "gru":
-        model = NestedUNetLSTM(int(n_classes), 2, filter_multiplier = float(filter_multiplier), create_gru=True, small = False)
+        model = NestedUNetLSTM(int(n_classes), 2, filter_multiplier = float(filter_multiplier), create_gru=True, small = False, polymorphisms=polymorphisms)
     elif net == "lstm_fwbw":
-        model = NestedUNetLSTM_fwbw(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False)
+        model = NestedUNetLSTM_fwbw(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False, polymorphisms=polymorphisms)
     elif net == "gru_fwbw":
-        model = NestedUNetLSTM_fwbw(int(n_classes), 2, filter_multiplier = float(filter_multiplier), create_gru=True, small = False)
+        model = NestedUNetLSTM_fwbw(int(n_classes), 2, filter_multiplier = float(filter_multiplier), create_gru=True, small = False, polymorphisms=polymorphisms)
     elif net == "extra":
-        model = NestedUNetExtraPos(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False)
+        model = NestedUNetExtraPos(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False, polymorphisms=polymorphisms)
     else:
-        model = NestedUNet(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False)
+        model = NestedUNet(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False, polymorphisms=polymorphisms)
 
 
     if weights != "None":
@@ -87,32 +74,24 @@ def predict_model_intronets(weights, ifile,  net="default", n_classes=1, chunk_s
     model = model.to(device)
     model.eval()
 
-
+    #loading of h5-file
     filename = ifile
     ifile = h5py.File(ifile, 'r')
-
     keys = list(ifile.keys())
-
     key = keys[0]
-
     poly_nr = ifile[key]["y"].shape[3]
-    ind_nr = ifile[key]["y"].shape[2]
 
-    G = gaussian(int(poly_nr), int(sigma))
-
-    G = G.view(1, 1, int(poly_nr)).to(device)
-    Gn = G.detach().cpu().numpy()
+    #preparing of smoothing (only necessary if smooth==True)
+    if smooth == True:
+        G = gaussian(int(poly_nr), int(sigma))
+        G = G.view(1, 1, int(poly_nr)).to(device)
+        Gn = G.detach().cpu().numpy()
 
     #main part
     full_ypred = []
     full_ytrue = []
 
-
-    haplotype_input = True
-
-
     #initialize
-
     try:
         indices = ifile["0"]["indices"][()][0]
     except:
@@ -121,16 +100,11 @@ def predict_model_intronets(weights, ifile,  net="default", n_classes=1, chunk_s
 
     #only take the target indices
     indices_start = indices[0]
-
-
+    #create a mapping of the phased haplotype input (i.e. 50/0) to integers
     idx = np.lexsort((indices_start[:,0], indices_start[:,1]))
     arr_sorted = indices_start[idx]
-
-
     arr_sorted = np.array(pd.DataFrame(arr_sorted).drop_duplicates(keep='first'))
-
     named_arr = list(range(len(arr_sorted)))
-
 
     max_replicate = 0
     max_endpos = 0
@@ -168,18 +142,14 @@ def predict_model_intronets(weights, ifile,  net="default", n_classes=1, chunk_s
     keys = ifile.keys()
 
     replicate_counter = 0
-    startpos1 = 0
-    endpos1 = startpos1 + poly_nr
 
 
-    counter = 0
 
     for key in keys:
 
         x = ifile[key]["x_0"]
         y = ifile[key]["y"]
 
-        #print("all the shapes")
         try:
             ix = ifile[key]["ix"][()]
 
@@ -195,30 +165,26 @@ def predict_model_intronets(weights, ifile,  net="default", n_classes=1, chunk_s
         
         try:
             pos = ifile[key]["pos"][()]
-
-
             startpos = [x[0][0][0] for x in pos]
             endpos = [x[0][0][1] for x in pos]
 
         except:
-            print("problem with position array!")
+            print("error in pos!")
 
 
         try:
             indices = ifile[key]["indices"]
-
             indices = [x[0,:] for x in indices]
             indices = np.array(indices)
 
         except:
-            print("problem with indices array")
+            print("error in indices!")
 
         
         # single channel case - should not happen with new functions
         if len(y.shape) == 3:
             y = np.expand_dims(y, 1)
-        
-        
+
         y_pred_ = []
 
         x_ = torch.FloatTensor(x).to(device)
@@ -234,18 +200,16 @@ def predict_model_intronets(weights, ifile,  net="default", n_classes=1, chunk_s
         if x_.shape[0] == 1:
             y_ = np.expand_dims(y_, 0)
     
-
+        #add current predicted and true values to list
         full_ypred.append(y_)
         full_ytrue.append(y)
-
-        
         y_pred_.append(y_)
 
-        #simple compare part
 
         for i, y_chunk in enumerate(y_):   
      
             indiv_inds = []
+            #haplotytype input is currently default, different input has to be tested!
             if haplotype_input == True:
                 for index in indices[i]:
 
@@ -255,20 +219,23 @@ def predict_model_intronets(weights, ifile,  net="default", n_classes=1, chunk_s
                 for index in indices[i][0]:
                     indiv_inds = indices[0][0][0]
 
-
+            #row_wise_addition should not change the results
+            #in both cases, the new values are added at the corresponding positions of the arrays which in the end contain all the information
+            #full_arr_true: all true introgressed SNPs
+            #full_arr_pred: accumulated probabilities for each SNP
+            #full_arr_count: counts how often a SNP was within a window
+            #if smooth==False, count is an integer, if True, it is weighted by the Gaussian smoothing   
             if row_wise_addition == True:
                 for ir, row in enumerate(y_chunk):
                     y_row = y[i][0][ir]
                     full_arr_true[replicate[i][0]][indiv_inds[ir],startpos[i]:endpos[i]]  = y_row
                     full_arr_pred[replicate[i][0]][indiv_inds[ir],startpos[i]:endpos[i]] = full_arr_pred[replicate[i][0]][indiv_inds[ir],startpos[i]:endpos[i]] + row
 
-
                     if smooth == False:
                         full_arr_count[replicate[i][0]][indiv_inds[ir],startpos[i]:endpos[i]]  = full_arr_count[replicate[i][0]][indiv_inds[ir],startpos[i]:endpos[i]]  + 1
 
                     else:
                         full_arr_count[replicate[i][0]][indiv_inds[ir],startpos[i]:endpos[i]]  = full_arr_count[replicate[i][0]][indiv_inds[ir],startpos[i]:endpos[i]]  + Gn.flatten()
-
 
             else:
             
@@ -283,7 +250,7 @@ def predict_model_intronets(weights, ifile,  net="default", n_classes=1, chunk_s
                     full_arr_count[replicate[i][0]][indiv_inds,startpos[i]:endpos[i]]  = full_arr_count[replicate[i][0]][indiv_inds,startpos[i]:endpos[i]]  + Gn.flatten()
             
 
-
+    #computation of simple precision recall curve (without windowing)
 
     full_ypred_final =expit(np.array(full_ypred).flatten())
 
@@ -303,6 +270,7 @@ def predict_model_intronets(weights, ifile,  net="default", n_classes=1, chunk_s
     plt.savefig(filename.split('.')[0] + "_simple_eval_" + weight_folder_name + ".png")
     plt.figure()
 
+    #preparing final arrays
 
     full_arr_true_flattened = full_arr_true.flatten()
     full_arr_pred_flattened= full_arr_pred.flatten()
@@ -315,8 +283,10 @@ def predict_model_intronets(weights, ifile,  net="default", n_classes=1, chunk_s
 
     final_pred = full_arr_pred_flattened_nonzero 
 
+    #final predictions
     final_expit = expit(final_pred/full_arr_count_flattened_nonzero)
-    final_expit1 = final_expit
+
+    #creating of full precision recall curves
 
     precision, recall, thresholds = precision_recall_curve(full_arr_true_flattened_nonzero, final_expit, drop_intermediate=True)
 
@@ -333,6 +303,10 @@ def predict_model_intronets(weights, ifile,  net="default", n_classes=1, chunk_s
 
     with open(prec_recall_file_simple,'wb') as f: pickle.dump([precision_simple, recall_simple, thresholds_simple], f)
 
+    #optional creating of precision recall curves for specific cutoff
+    if indiv_cutoff == True:
+        intronets_evaluate_cutoffs([full_arr_true_flattened_nonzero], [final_expit], cutoff_list = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.99], plot=True, save_plot=True, save_numbers=True, plot_title="precision recall curve", plot_filename=filename.split('.')[0] + "_cutoffs_" + weight_folder_name + ".png" , numbers_filename=filename.split('.')[0] + "_cutoffs_" + weight_folder_name + ".png")
+
 
     if return_full == False:
 
@@ -340,15 +314,16 @@ def predict_model_intronets(weights, ifile,  net="default", n_classes=1, chunk_s
 
     else:
 
-        return precision, recall, precision_simple, recall_simple, full_ypred, full_ytrue, full_arr_true, full_arr_pred,  full_arr_true_flattened, full_arr_pred_flattened, full_arr_count_flattened, full_arr_count_flattened_nonzero_indices, final_expit, final_expit1
+        return precision, recall, precision_simple, recall_simple, full_ypred, full_ytrue, full_arr_true, full_arr_pred,  full_arr_true_flattened, full_arr_pred_flattened, full_arr_count_flattened, full_arr_count_flattened_nonzero_indices, final_expit
 
 
 
 
-
-
-
-def predict_model_intronets_simple(weights, ifile,  net="default", chunk_size=4, n_classes=1, smooth=False, filter_multiplier=1, sigma = 30):
+def predict_model_intronets_simple(weights, ifile, net='default', n_classes=1, chunk_size=4,  smooth=False, filter_multiplier=1, sigma = 30):
+    '''
+    this function creates only the simple precision recall curves (i.e. without windowing information)
+    it is not needed currently, if, however, the h5-files are not prepared correctly (have no position information), it could be used to nonetheless obtain predictions 
+    '''
     if torch.cuda.is_available():
         device = torch.device('cuda')
     else:
@@ -357,20 +332,10 @@ def predict_model_intronets_simple(weights, ifile,  net="default", chunk_size=4,
 
     if net == "default":
         model = NestedUNet(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False)
+    elif net == "net2":
+        model = NestedUNet2(int(n_classes), 3, filter_multiplier = float(filter_multiplier), small = False)
     elif net == "multi":
-        model = NestedUNet(int(n_classes), 3, filter_multiplier = float(filter_multiplier), small = False)
-    elif net == "multi_fwbw":
-        model = NestedUNet(int(n_classes), 4, filter_multiplier = float(filter_multiplier), small = False)
-    elif net == "lstm":
-        model = NestedUNetLSTM(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False)
-    elif net == "gru":
-        model = NestedUNetLSTM(int(n_classes), 2, filter_multiplier = float(filter_multiplier), create_gru=True, small = False)
-    elif net == "lstm_fwbw":
-        model = NestedUNetLSTM_fwbw(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False)
-    elif net == "gru_fwbw":
-        model = NestedUNetLSTM_fwbw(int(n_classes), 2, filter_multiplier = float(filter_multiplier), create_gru=True, small = False)
-    elif net == "extra":
-        model = NestedUNetExtraPos(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False)
+        model = NestedUNetMultiChannel(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False)
     else:
         model = NestedUNet(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False)
 
@@ -381,9 +346,6 @@ def predict_model_intronets_simple(weights, ifile,  net="default", chunk_size=4,
     model = model.to(device)
     model.eval()
 
-    Y = []
-    Y_pred = []
-    indices_ = []
 
     counter = 0
 
@@ -500,9 +462,7 @@ def predict_model_intronets_simple(weights, ifile,  net="default", chunk_size=4,
         
         y_pred_.append(y_)
 
-
         #simple compare part
-
         full_ypred.append(y_)
         full_ytrue.append(y)
 

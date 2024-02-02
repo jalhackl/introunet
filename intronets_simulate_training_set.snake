@@ -15,19 +15,13 @@ from intronets_hdf_extended import *
 from intronets_process import *
 from intronets_windows import *
 
-
 from intronets_run import *
-
 from sstar.simulate import simulate
 
 
-
 configfile: "config_intronets_archie1.yaml"
-
 model_name = "archie"
 output_dir = config["output_dir"]
-
-
 demo_model_file = config["simulation_yamls"]["archie"]
 
 nrep = 1000
@@ -44,7 +38,7 @@ output_dir = config["output_dir"]
 seed = config["seed"]
 
 hdf_filename = config["hdf_filename"]
-#total rep indicates the total number of replicates!!!
+#total rep indicates the total number of replicates!
 total_rep =  100000
 nrep =  10000
 
@@ -59,7 +53,9 @@ thread = 64
 
 is_phased = True
 
+#if create_extras == True, also h5-files with additional information (position of SNPs, distances between adjacent SNPs, etc. are created)
 create_extras = True
+#if no_window == True, no windowing is applied, but solely one random (or the first) window is chosen
 no_window=False
 
 remove_intermediate_data=True
@@ -69,6 +65,7 @@ random_el=1
 one_target=True
 polymorphisms=128
 stepsize=16
+#if only_first, only the first window is used
 only_first=True
 return_data = False
 

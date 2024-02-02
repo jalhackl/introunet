@@ -20,7 +20,25 @@ from concurrent.futures import ProcessPoolExecutor as Pool
 
 
 
-def get_matrices(vcf_file, bed_file, chr_nr=None, polymorphisms=128, stepsize=16, fixed_nr=True, remove_samples_wo_introgression=False, return_also_pos = True, return_for_pytorch=True):
+def get_matrices(vcf_file, bed_file, chr_nr=None, polymorphisms=128, stepsize=16, remove_samples_wo_introgression=False):
+    """
+    Description:
+        returns an array containing - NOT used in the usual workflow, because parallelized version get_matrices_multiproc is used: 
+        pop_df_ref_genotype_win: windows of reference haplotype
+        pop_df_target_genotype_win: windows of target haplotype
+        intro_df_ref_genotype_win: windows of reference introgression (0: no / 1: true); for unidirectional introgression, it only contains 0s
+        intro_df_target_genotype_win: windows of target introgression (0: no / 1: true)
+        positions: SNP position
+        ref_samples_haplos: name of the individuals in the reference population
+        target_samples_haplos: name of the individuals in the target population
+        chr_nr: if chr_nr!=None, also the replicate number is returned
+
+
+    Arguments:
+        vcf_file str: folder containing files
+        bed_file str: folder containing files
+    """
+        
     pop_df_ref, pop_df_target, intro_df_ref, intro_df_target, newsamples_ref, newsamples_target, newpos = format_from_vcf_df(vcf_file, bed_file)
     
     pop_df_ref_genotype = pop_df_ref[["genotype"]].to_numpy().squeeze()
@@ -73,7 +91,33 @@ def get_matrices(vcf_file, bed_file, chr_nr=None, polymorphisms=128, stepsize=16
 
 
 
-def get_matrices_multiproc(files, polymorphisms=128, stepsize=16, fixed_nr=True, random_reg=False, random_el=1, remove_samples_wo_introgression=False, only_first=False, return_also_pos = True, return_for_pytorch=True):
+def get_matrices_multiproc(files, polymorphisms=128, stepsize=16, random_reg=False, random_el=1, remove_samples_wo_introgression=False, only_first=False, return_also_pos = True):
+    """
+    Description:
+        returns an array containing:
+        pop_df_ref_genotype_win: windows of reference haplotype
+        pop_df_target_genotype_win: windows of target haplotype
+        intro_df_ref_genotype_win: windows of reference introgression (0: no / 1: true); for unidirectional introgression, it only contains 0s
+        intro_df_target_genotype_win: windows of target introgression (0: no / 1: true)
+        positions: SNP position
+        ref_samples_haplos: name of the individuals in the reference population
+        target_samples_haplos: name of the individuals in the target population
+        chr_nr: if chr_nr!=None, also the replicate number is returned
+
+
+    Arguments:
+        files list: list containing three arrays: vcf-file information, bed-file information, and nr of the current replicate
+        bed_file str: folder containing files
+        polymorphisms int: number of polymorphisms to be used for one window
+        stepsize int: stepsize of the windowing process
+        random_reg bool: if True, one or more (indicated by random_el) windows are randomly cut out
+        random_el int: number of randomly chosen windows (if random_reg == True)
+        remove_samples_wo_introgression bool: if True, windows without introgression are discarded
+        only_first bool: if True, only the first window (i.e. the first SNPs indicated by the polymorphisms argument) is processed
+        return_also_pos bool: if True, also the position of the window within the chromsome is returned
+
+    """
+        
     vcf_file = files[0]
     bed_file = files[1]
     chr_nr = files[2]
@@ -83,7 +127,6 @@ def get_matrices_multiproc(files, polymorphisms=128, stepsize=16, fixed_nr=True,
     pop_df_ref_genotype = pop_df_ref[["genotype"]].to_numpy().squeeze()
     pop_df_target_genotype = pop_df_target[["genotype"]].to_numpy().squeeze()
     
-
     
     intro_df_ref_genotype = intro_df_ref[["genotype"]].to_numpy().squeeze()
     intro_df_target_genotype = intro_df_target[["genotype"]].to_numpy().squeeze()
@@ -118,8 +161,6 @@ def get_matrices_multiproc(files, polymorphisms=128, stepsize=16, fixed_nr=True,
 
                 newpos_win = newpos[startpos:endpos]
 
-
-                
                 
                 if remove_samples_wo_introgression == True:
 
@@ -185,7 +226,6 @@ def get_matrices_multiproc(files, polymorphisms=128, stepsize=16, fixed_nr=True,
                     continue
             
             
-
             if return_also_pos == False:
                 if chr_nr == None:
                     full_array.append([pop_df_ref_genotype_win, pop_df_target_genotype_win,intro_df_ref_genotype_win, intro_df_target_genotype_win, positions, ref_samples_haplos, target_samples_haplos ])
@@ -206,7 +246,26 @@ def get_matrices_multiproc(files, polymorphisms=128, stepsize=16, fixed_nr=True,
 
 
 
-def process_vcf_df_windowed(folder, polymorphisms=128, stepsize=16, one_target=True):
+def process_vcf_df_windowed(folder, polymorphisms=128, stepsize=16):
+    """
+    Description:
+        returns an array containing - NOT used in the usual workflow, because parallelized version get_matrices_multiproc is used: 
+        pop_df_ref_genotype_win: windows of reference haplotype
+        pop_df_target_genotype_win: windows of target haplotype
+        intro_df_ref_genotype_win: windows of reference introgression (0: no / 1: true); for unidirectional introgression, it only contains 0s
+        intro_df_target_genotype_win: windows of target introgression (0: no / 1: true)
+        positions: SNP position
+        ref_samples_haplos: name of the individuals in the reference population
+        target_samples_haplos: name of the individuals in the target population
+        chr_nr: if chr_nr!=None, also the replicate number is returned
+
+
+    Arguments:
+        folder folder: folder containing files
+        polymorphisms int: folder containing files
+        stepsize int: 
+    """
+        
     vcf_files, bed_files = get_vcf_bed_folder(folder)
 
     
@@ -236,7 +295,19 @@ def process_vcf_df_windowed(folder, polymorphisms=128, stepsize=16, one_target=T
 
 
 
-def process_vcf_df_windowed_multiproc(folder, polymorphisms=128, stepsize=16, start_rep=0, only_first=False, random_reg=False, random_el=1, ignore_zero_introgression=True, one_target=True):
+def process_vcf_df_windowed_multiproc(folder, polymorphisms=128, stepsize=16, start_rep=0, only_first=False, random_reg=False, random_el=1, ignore_zero_introgression=True):
+    """
+    Description:
+        processes all pairs of vcf- and bed- files in all subdirectories of the input folder
+        seriation is applied and an array ready to be stored as hdf is returned
+
+
+    Arguments:
+        folder folder: folder containing files (vcf and bed with truth tracts)
+        polymorphisms int: number of polymorphisms used for one window
+        stepsize int: stepsize for the windowing process
+    """
+        
     vcf_files, bed_files = get_vcf_bed_folder(folder, ignore_zero_introgression = ignore_zero_introgression)
     
     from functools import partial
@@ -262,6 +333,7 @@ def process_vcf_df_windowed_multiproc(folder, polymorphisms=128, stepsize=16, st
 
     #pool2 = Pool()
     
+    #for further processing, the nested entries (one index per vcf-file) are flattened
     flattened_entries = []
     for entry in all_entries:
         for subentry in entry:

@@ -4,21 +4,23 @@ from scipy.spatial.distance import pdist, cdist
 from seriate import seriate
 import numpy as np
 import pandas as pd
-import allel
-#import utils
-import os
 from pathlib import Path
-
-
-#import intronets_seriation
-#import intronets_format
-#import intronets_windows
-#from intronets_format import *
-#from intronets_seriation import *
-#from intronets_windows import *
+import h5py
 
 
 def final_format(entries, only_target_intro = True, change_ref_target=False, fullpos=True):
+    """
+    Description:
+        this function returns the vcf and bed files of the input folder
+
+    Arguments:
+        entries list: list containing the information about SNPs and introgression
+        only_target_intro bool: if True, only the Target introgression array is incorporated into the final format (for unidirectional introgression)
+        change_ref_target bool: if True, the order of the haplotype arrays is switches (in the current workflow, it is in the right order, so false is the default)
+        fullpos bool: if True, not only the start-, but also the endposition of the window is stored
+    """
+        
+
     final_entries = []
     for entry in entries:
         if change_ref_target == False:
@@ -47,77 +49,24 @@ def final_format(entries, only_target_intro = True, change_ref_target=False, ful
             final_entries.append([x, intro, samples, position, endposition, ix, positions])
         
     return final_entries
-            
-
-def create_hdf_table_extrakey_chunk3(hdf_file, input_entries, x_name = "x_0", y_name="y", chunk_size=4):
-    import h5py
-    
-    act_shape0 = input_entries[0][0].shape
-    act_shape1 = input_entries[0][1].shape
-    num_lines = len(input_entries)
-    
-    with h5py.File(hdf_file, 'w') as h5f:
-    
-        for i in range(0, len(input_entries)-chunk_size, chunk_size):
-            
-            dset1 = h5f.create_dataset(str(i) + "/" + x_name,
-                                   shape=(chunk_size, act_shape0[0], act_shape0[1], act_shape0[2]),
-                                   compression='lzf',
-                                   dtype=np.uint8)
-            dset2 = h5f.create_dataset(str(i) + "/" + y_name,
-                                       shape=(chunk_size, 1, act_shape1[0], act_shape1[1]),
-                                       compression='lzf',
-                                       dtype=np.uint8)
-            
-            for k in range(chunk_size):
-                entry = input_entries[i+k]
-
-
-                features = entry[0]
-                labels = entry[1]
-
-
-                dset1[k] = features
-                dset2[k] = [labels]
-
-
-
-def create_hdf_table_extrakey_chunk3_groups(hdf_file, input_entries, start_nr=0, x_name = "x_0", y_name="y", chunk_size=4):
-    #this function takes a start group number as input and returns the final group number (so that the next iteration can start with this number and no groups are overwritten)
-    import h5py
-    
-    act_shape0 = input_entries[0][0].shape
-    act_shape1 = input_entries[0][1].shape
-    num_lines = len(input_entries)
-    
-    with h5py.File(hdf_file, 'w') as h5f:
-    
-        for i in range(0, len(input_entries)-chunk_size+1, chunk_size):
-            
-            dset1 = h5f.create_dataset(str(i+start_nr) + "/" + x_name,
-                                   shape=(chunk_size, act_shape0[0], act_shape0[1], act_shape0[2]),
-                                   compression='lzf',
-                                   dtype=np.uint8)
-            dset2 = h5f.create_dataset(str(i+start_nr) + "/" + y_name,
-                                       shape=(chunk_size, 1, act_shape1[0], act_shape1[1]),
-                                       compression='lzf',
-                                       dtype=np.uint8)
-            
-            for k in range(chunk_size):
-                entry = input_entries[i+k]
-
-                features = entry[0]
-                labels = entry[1]
-
-                dset1[k] = features
-                dset2[k] = [labels]
-
-     #return the current group number
-    return i+start_nr+chunk_size
 
 
 def create_hdf_table_extrakey_chunk3_windowed(hdf_file, input_entries, start_nr=0, x_name = "x_0", y_name="y", ind_name="indices", pos_name="pos", ix_name="ix", chunk_size=4):
-    import h5py
+    """
+    Description:
+        this is the current DEFAULT FUNCTION for creating the h5-file
+
+    Arguments:
+        hdf_file str: name of the hdf-file to be created (or extended)
+        input_entries list: list of windows returned by the formatting and seriation function
+        start_nr int: the integer which denotes the first group to be created
+        x_name str: name of the SNP array
+        y_name str: name of the introgression array
+        ind_name str: name of the array containing the names of the individuals
+        pos_name str: name of the array containing the positions of the SNPs
+        ix_name str: name of the array containing the replicate number
+        chunk_size int: chunk size, i.e. how many entries are stored per key
+    """
     
     input_entries = final_format(input_entries)
     
@@ -131,7 +80,6 @@ def create_hdf_table_extrakey_chunk3_windowed(hdf_file, input_entries, start_nr=
     #create if not existent, otherwise add entries
     with h5py.File(hdf_file, 'a') as h5f:
 
-    # use num_features-1 if the csv file has a column header
         for i in range(0, len(input_entries)-chunk_size+1, chunk_size):
             
             dset1 = h5f.create_dataset(str(i+start_nr) + "/" + x_name,
@@ -176,6 +124,74 @@ def create_hdf_table_extrakey_chunk3_windowed(hdf_file, input_entries, start_nr=
     
     #return the current group number
     return i+start_nr+chunk_size
+            
+
+def create_hdf_table_extrakey_chunk3(hdf_file, input_entries, x_name = "x_0", y_name="y", chunk_size=4):
+    import h5py
+    input_entries = final_format(input_entries)
+    
+    act_shape0 = input_entries[0][0].shape
+    act_shape1 = input_entries[0][1].shape
+    
+    with h5py.File(hdf_file, 'w') as h5f:
+    
+        for i in range(0, len(input_entries)-chunk_size, chunk_size):
+            
+            dset1 = h5f.create_dataset(str(i) + "/" + x_name,
+                                   shape=(chunk_size, act_shape0[0], act_shape0[1], act_shape0[2]),
+                                   compression='lzf',
+                                   dtype=np.uint8)
+            dset2 = h5f.create_dataset(str(i) + "/" + y_name,
+                                       shape=(chunk_size, 1, act_shape1[0], act_shape1[1]),
+                                       compression='lzf',
+                                       dtype=np.uint8)
+            
+            for k in range(chunk_size):
+                entry = input_entries[i+k]
+
+
+                features = entry[0]
+                labels = entry[1]
+
+
+                dset1[k] = features
+                dset2[k] = [labels]
+
+
+
+def create_hdf_table_extrakey_chunk3_groups(hdf_file, input_entries, start_nr=0, x_name = "x_0", y_name="y", chunk_size=4):
+    #this function takes a start group number as input and returns the final group number (so that the next iteration can start with this number and no groups are overwritten)
+    import h5py
+    input_entries = final_format(input_entries)
+
+    act_shape0 = input_entries[0][0].shape
+    act_shape1 = input_entries[0][1].shape
+    
+    with h5py.File(hdf_file, 'w') as h5f:
+    
+        for i in range(0, len(input_entries)-chunk_size+1, chunk_size):
+            
+            dset1 = h5f.create_dataset(str(i+start_nr) + "/" + x_name,
+                                   shape=(chunk_size, act_shape0[0], act_shape0[1], act_shape0[2]),
+                                   compression='lzf',
+                                   dtype=np.uint8)
+            dset2 = h5f.create_dataset(str(i+start_nr) + "/" + y_name,
+                                       shape=(chunk_size, 1, act_shape1[0], act_shape1[1]),
+                                       compression='lzf',
+                                       dtype=np.uint8)
+            
+            for k in range(chunk_size):
+                entry = input_entries[i+k]
+
+                features = entry[0]
+                labels = entry[1]
+
+                dset1[k] = features
+                dset2[k] = [labels]
+
+     #return the current group number
+    return i+start_nr+chunk_size
+
 
 
 def create_hdf_table_extrakey_chunk3_poschannel(hdf_file, input_entries, x_name = "x_0", y_name="y", chunk_size=4):
@@ -183,7 +199,6 @@ def create_hdf_table_extrakey_chunk3_poschannel(hdf_file, input_entries, x_name 
     
     act_shape0 = input_entries[0][0].shape
     act_shape1 = input_entries[0][1].shape
-    num_lines = len(input_entries)
     
     with h5py.File(hdf_file, 'w') as h5f:
     
@@ -221,7 +236,6 @@ def create_hdf_table_extrakey_chunk3_poschannel_scaled(hdf_file, input_entries, 
     
     act_shape0 = input_entries[0][0].shape
     act_shape1 = input_entries[0][1].shape
-    num_lines = len(input_entries)
     
     with h5py.File(hdf_file, 'w') as h5f:
     
@@ -256,7 +270,6 @@ def create_hdf_table_extrakey_chunk3_poschannel_gradient(hdf_file, input_entries
     
     act_shape0 = input_entries[0][0].shape
     act_shape1 = input_entries[0][1].shape
-    num_lines = len(input_entries)
     
     with h5py.File(hdf_file, 'w') as h5f:
     
@@ -293,7 +306,6 @@ def create_hdf_table_extrakey_chunk3_poschannels_forward_backward(hdf_file, inpu
     
     act_shape0 = input_entries[0][0].shape
     act_shape1 = input_entries[0][1].shape
-    num_lines = len(input_entries)
     
     with h5py.File(hdf_file, 'w') as h5f:
     

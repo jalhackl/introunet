@@ -13,17 +13,17 @@ from pathlib import Path
 
 
 
-def apply_seriation(genotype_array, metric = 'euclidean', print_something=False):
-    x = genotype_array
-    
-    if print_something == True:
-        print(genotype_array)
-        print("x")
-        print(x)
-        print("xshape")
-        print(x.shape)
+def apply_seriation(genotype_array, metric = 'euclidean'):
+    """
+    Description:
+        function which applies seriation on the input array
 
-    
+    Arguments:
+        genotype_array np.array: input array for seriation
+        metric str: metric to be used (has to be supported by sklearn)
+    """
+
+    x = genotype_array
     Dx = pdist(x, metric = metric)
     Dx[np.where(np.isnan(Dx))] = 0.
     ix = seriate(Dx, timeout = 0)
@@ -32,7 +32,16 @@ def apply_seriation(genotype_array, metric = 'euclidean', print_something=False)
 
 
 
-def apply_lsum_and_seriation(genotype_array1, genotype_array2, metric = 'euclidean', print_something=False):
+def apply_lsum_and_seriation(genotype_array1, genotype_array2, metric = 'euclidean'):
+    """
+    Description:
+        function which applies seriation on the first genotype array and subsequently linear sum assignment
+
+    Arguments:
+        genotype_array1 np.array: list containing the following arrays in this order: genotype_array1, genotype_array2, target_array1, ind_array1, ind_array2, target_array2 
+        genotype_array2 np.array: if true, also the positions (stored at the last index of the input array) are returned
+    """
+    
     genotype_array1_seriated, genotype_array1_seriated_indices = apply_seriation(genotype_array1)
     
     x1 = genotype_array1_seriated
@@ -76,10 +85,18 @@ def apply_lsum_and_seriation_and_sort(genotype_array1, genotype_array2,target_ar
 
 
 
-#def apply_lsum_and_seriation_and_sort_multiproc(genotype_array1, genotype_array2,target_array1,ind_array1=None, ind_array2=None, target_array2=None):
 def apply_lsum_and_seriation_and_sort_multiproc(flattened_array, return_last_element=True):
+    """
+    Description:
+        function for parallelized application of seriation
+        after processing, the seriated list of arrays is returned
+
+    Arguments:
+        flattened_array list: list containing the following arrays in this order: genotype_array1, genotype_array2, target_array1, ind_array1, ind_array2, target_array2 
+        return_last_element bool: if true, also the positions (stored at the last index of the input array) are returned
+    """
  
-#subentry[1], subentry[0],subentry[3],ind_array1=subentry[6], ind_array2=subentry[5], target_array2=subentry[2]
+    #subentry[1], subentry[0],subentry[3],ind_array1=subentry[6], ind_array2=subentry[5], target_array2=subentry[2]
     
     genotype_array1 = flattened_array[0]
     genotype_array2 = flattened_array[1]

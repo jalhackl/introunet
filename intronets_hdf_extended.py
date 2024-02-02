@@ -4,24 +4,10 @@ from scipy.spatial.distance import pdist, cdist
 from seriate import seriate
 import numpy as np
 import pandas as pd
-import allel
-#import utils
-import os
 from pathlib import Path
-
-
-#import intronets_seriation
-#import intronets_format
-#import intronets_windows
-#from intronets_format import *
-#from intronets_seriation import *
-#from intronets_windows import *
-
 from intronets_hdf import *
 
-
-
-
+#This file contains 'extend' h5-creation functions (i.e. also storing the distances between SNPs)
 
 def create_hdf_table_extrakey_chunk3_windowed_poschannel(hdf_file, input_entries, start_nr=0, translate_start_to_zero=True, divide_by_seq_length = False, x_name = "x_0", y_name="y", ind_name="indices", pos_name="pos", ix_name="ix", chunk_size=4, seq_length=50000):
     import h5py
@@ -83,7 +69,6 @@ def create_hdf_table_extrakey_chunk3_windowed_poschannel(hdf_file, input_entries
 
 
                 if translate_start_to_zero == True:
-                    #onepos = onepos - startposition[0][0]
                     onepos = onepos - onepos[0]
 
                 if divide_by_seq_length == True:
@@ -120,13 +105,10 @@ def create_hdf_table_extrakey_chunk3_windowed_gradient(hdf_file, input_entries, 
     act_shape2 = input_entries[0][2].shape
     act_shape3 = input_entries[0][3].shape
 
-    #act_shape5 = input_entries[0][5].shape
-
     #with h5py.File(hdf_file, 'w') as h5f:
     #create if not existent, otherwise add entries
     with h5py.File(hdf_file, 'a') as h5f:
 
-    # use num_features-1 if the csv file has a column header
         for i in range(0, len(input_entries)-chunk_size+1, chunk_size):
             
             dset1 = h5f.create_dataset(str(i+start_nr) + "/" + x_name,
@@ -205,7 +187,6 @@ def create_hdf_table_extrakey_chunk3_windowed_forward_backward(hdf_file, input_e
     #create if not existent, otherwise add entries
     with h5py.File(hdf_file, 'a') as h5f:
 
-    # use num_features-1 if the csv file has a column header
         for i in range(0, len(input_entries)-chunk_size+1, chunk_size):
             
             dset1 = h5f.create_dataset(str(i+start_nr) + "/" + x_name,
@@ -249,7 +230,6 @@ def create_hdf_table_extrakey_chunk3_windowed_forward_backward(hdf_file, input_e
 
                 #positions should be -1 now
                 onepos = entry[-1]
-                #onepos = np.gradient(onepos)
 
                 startposition = entry[3]
                 endposition = entry[4]

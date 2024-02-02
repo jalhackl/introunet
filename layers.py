@@ -307,7 +307,7 @@ class NestedUNet(nn.Module):
 
 
 class NestedUNetLSTM(nn.Module):
-    def __init__(self, num_classes, input_channels=2, filter_multiplier = 1, hidden_dim=4, n_layers=1, create_gru=True, bidirectional=True,
+    def __init__(self, num_classes, input_channels=2, filter_multiplier = 1, hidden_dim=4, n_layers=1, create_gru=True, bidirectional=True, polymorphisms=128,
                  deep_supervision=False, small = False, **kwargs):
         super().__init__()
 
@@ -332,7 +332,7 @@ class NestedUNetLSTM(nn.Module):
         #                    nn.Linear(128, 3), nn.Softmax(dim = -1))
 
 
-        self.out = nn.Sequential(nn.Linear(128, 256),  nn.LayerNorm((256,)), nn.Linear(256, 128))
+        self.out = nn.Sequential(nn.Linear(polymorphisms, 256),  nn.LayerNorm((256,)), nn.Linear(256, polymorphisms))
 
         self.hidden_dim = hidden_dim
         self.n_layers = n_layers
@@ -442,7 +442,7 @@ class NestedUNetLSTM(nn.Module):
 
 
 class NestedUNetLSTM_fwbw(nn.Module):
-    def __init__(self, num_classes, input_channels=2, filter_multiplier = 1, hidden_dim=4, n_layers=1, create_gru=True, bidirectional=True,
+    def __init__(self, num_classes, input_channels=2, filter_multiplier = 1, hidden_dim=4, n_layers=1, create_gru=True, bidirectional=True, polymorphisms=128, 
                  deep_supervision=False, small = False, **kwargs):
         super().__init__()
 
@@ -464,7 +464,7 @@ class NestedUNetLSTM_fwbw(nn.Module):
 
 
 
-        self.out = nn.Sequential(nn.Linear(128, 256),  nn.LayerNorm((256,)), nn.Linear(256, 128))
+        self.out = nn.Sequential(nn.Linear(polymorphisms, 256),  nn.LayerNorm((256,)), nn.Linear(256, polymorphisms))
 
         self.hidden_dim = hidden_dim
         self.n_layers = n_layers
@@ -582,7 +582,7 @@ class NestedUNetLSTM_fwbw(nn.Module):
 
 #This version accepts a second vector (e.g. positions) as input which is processed via a FNN
 class NestedUNetExtraPos(nn.Module):
-    def __init__(self, num_classes, input_channels=3, filter_multiplier = 1,
+    def __init__(self, num_classes, input_channels=3, filter_multiplier = 1, polymorphisms=128,
                  deep_supervision=False, small = False, **kwargs):
         super().__init__()
 
@@ -603,11 +603,11 @@ class NestedUNetExtraPos(nn.Module):
         self.conv3_0 = ResBlock(nb_filter[2], nb_filter[3] // 2)
 
         #new
-        #self.out = nn.Sequential(nn.Linear(128, 128), nn.LayerNorm((128,)), nn.ReLU(),
+        #self.out = nn.Sequential(nn.Linear(polymorphisms, 128), nn.LayerNorm((128,)), nn.ReLU(),
         #                    nn.Linear(128, 3), nn.Softmax(dim = -1))
 
-        self.out = nn.Sequential(nn.Linear(128, 512),  nn.ReLU(),
-                        nn.Linear(512, 128), nn.Sigmoid())
+        self.out = nn.Sequential(nn.Linear(polymorphisms, 512),  nn.ReLU(),
+                        nn.Linear(512, polymorphisms), nn.Sigmoid())
 
         if not self.small:
             self.conv4_0 = ResBlock(nb_filter[3], nb_filter[4] // 2)

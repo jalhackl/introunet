@@ -1,5 +1,4 @@
 output_dir: "intermediate_resb"
-#replicates: 10
 seed: None
 seq_len: 50000
 1src_demo_models: ['archie']
@@ -15,7 +14,6 @@ tgt_ids: {'archie':'Tgt'}
 
 simulation_yamls: {'archie' : 'ArchIE_3D19.yaml'}
 
-#scenarios: ["true", "const", "ref_tgt_only"]
 nref: 50
 ntgt: 50
 nrep: 100

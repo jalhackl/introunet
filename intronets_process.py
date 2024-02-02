@@ -4,12 +4,13 @@ import pandas as pd
 from intronets_seriation import *
 from intronets_format import *
 
+#These functions are only called if no windowing is used
 
+def full_format_seriate_pipeline_df_multiproc(files, fixed_nr=True, remove_samples_wo_introgression=True, nr_polymorphisms=128, random_restrict=True,return_also_pos = True):
 
-def full_format_seriate_pipeline_df_multiproc(files, fixed_nr=True, remove_samples_wo_introgression=True, nr_polymorphisms=128, random_restrict=True,return_also_pos = True, return_for_pytorch=True):
+        
     vcf_file = files[0]
     bed_file = files[1]
-    #chr_nr = files[2]
     
     
     pop_df_ref, pop_df_target, intro_df_ref, intro_df_target, newsamples_ref, newsamples_target, newpos = format_from_vcf_df(vcf_file, bed_file)
@@ -35,7 +36,7 @@ def full_format_seriate_pipeline_df_multiproc(files, fixed_nr=True, remove_sampl
     if remove_samples_wo_introgression == True:
 
         if 1 not in np.unique(intro_df_target_genotype):
-            print("da ist was schiefgelaufen...")
+            print("The array does not contain any introgression, an empty is list is returned...")
             return []
             
     ref_samples_haplos = pop_df_ref[["ind", "hap"]].to_numpy().squeeze()
@@ -59,9 +60,6 @@ def process_vcf_df_multiproc(folder, fixed_nr= True,remove_samples_wo_introgress
     
     
     all_entries = []
-
-    process_counter = 0
-    
     
         
     import multiprocessing

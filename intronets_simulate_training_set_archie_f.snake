@@ -1,8 +1,9 @@
+#this snakemake simulation file also creates the archie feature labels for the simulated files
+
 import sys
 sys.path.insert(0, './')
 
 import sstar
-import utils
 import os
 import demes
 import numpy as np
@@ -15,6 +16,8 @@ from intronets_hdf import *
 from intronets_hdf_extended import *
 from intronets_process import *
 from intronets_windows import *
+
+
 from intronets_run import *
 
 from sstar.simulate import simulate
@@ -24,46 +27,44 @@ from sstar.simulate import simulate
 configfile: "config_intronets_archie1.yaml"
 
 model_name = "archie"
-
 output_dir = config["output_dir"]
 
 
 demo_model_file = config["simulation_yamls"]["archie"]
 
 nrep = 1000
-nref = 50
-ntgt= 1
+nref = config["nref"]
+ntgt= config["ntgt"]
 ref_id = config["ref_ids"]["archie"]
 tgt_id = config["tgt_ids"]["archie"]
 src_id = config["src_ids"]["archie"]
 seq_len = config["seq_len"]
 mut_rate = config["mutation_rates"]["archie"]
 rec_rate = config["recombination_rates"]["archie"]
-threads = 6
 output_prefix = "archie_rep_model"
 output_dir = config["output_dir"]
 seed = config["seed"]
 
 hdf_filename = config["hdf_filename"]
 #total rep indicates the total number of replicates!!!
-total_rep =  10000
-nrep =  1000
+total_rep =  1000
+nrep =  100
 
 nrep_folder = total_rep / nrep
 
-hdf_filename = "hdf_10k_archie_random.h5"
+hdf_filename = "100k_random_wo.h5"
 new_hdf_file = hdf_filename
-output_dir = "dir_hdf_10k_archie_random"
+output_dir = "100k_random_wo"
 
 ploidy = 2
-thread = 6
+thread = 16
 
 is_phased = True
 
 create_extras = True
 no_window=False
 
-remove_intermediate_data=True
+remove_intermediate_data=False
 remove_samples_wo_introgression=False
 random_restrict=True
 random_el=1
@@ -73,8 +74,14 @@ stepsize=16
 only_first=True
 return_data = False
 
+feature_file = "archie.features.yaml"
+feature_folder = output_dir + "_labels"
+if feature_file != None:
+    os.mkdir(feature_folder)
+
 rule all:
     run:
+
         if create_extras == True:
             poschannel_hdf_file = "poschannel_" + new_hdf_file
             poschannel_scaled_hdf_file = "poschannel_scaled_" + new_hdf_file
@@ -110,7 +117,12 @@ rule all:
         for i in range(int(nrep_folder)):
             print("current counter i", i)
             new_output_dir = output_dir + str(i)
-            shell("sstar simulate --demes {demo_model_file} --replicate {nrep} --nref {nref} --ntgt {ntgt} --ref-id {ref_id} --tgt-id {tgt_id} --src-id {src_id} --mut-rate {mut_rate} --rec-rate {rec_rate} --seq-len {seq_len} --output-prefix {output_prefix} --output-dir {new_output_dir} --thread 32 --seed 12345 --keep-simulated-data --phased")
+
+            if isinstance(seed, int):
+                shell("sstar simulate --demes {demo_model_file} --replicate {nrep} --nref {nref} --ntgt {ntgt} --ref-id {ref_id} --tgt-id {tgt_id} --src-id {src_id} --mut-rate {mut_rate} --rec-rate {rec_rate} --seq-len {seq_len} --output-prefix {output_prefix} --output-dir {new_output_dir} --thread {thread} --features {feature_file}  --seed {seed} --keep-simulated-data --phased")
+            else:
+                print("no seed is used")
+                shell("sstar simulate --demes {demo_model_file} --replicate {nrep} --nref {nref} --ntgt {ntgt} --ref-id {ref_id} --tgt-id {tgt_id} --src-id {src_id} --mut-rate {mut_rate} --rec-rate {rec_rate} --seq-len {seq_len} --output-prefix {output_prefix} --output-dir {new_output_dir} --thread {thread} --features {feature_file} --keep-simulated-data --phased")
 
             print("simprocess accomplished")
 
@@ -136,7 +148,8 @@ rule all:
 
                 gn = create_hdf_table_extrakey_chunk3_groups(new_hdf_file, all_entries, start_nr=gn)
 
-
-
+            output_labels = new_output_dir + "/" + output_prefix + ".all.labeled.features"
+            shutil.copy(output_labels, feature_folder + "/" +  output_prefix + str(i) + ".all.labeled.features")
+            
             if remove_intermediate_data == True:
                 shutil.rmtree(new_output_dir)
