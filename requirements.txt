@@ -1,0 +1,10 @@
+sstar @ git+https://github.com/xin-huang/sstar.git@dev
+h5py
+matplotlib
+numpy
+pandas
+scikit_learn
+scipy
+seaborn
+seriate==1.1.2
+torch==2.2.0
