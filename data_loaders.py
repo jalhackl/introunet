@@ -7,10 +7,7 @@ import random
 import torch
 import os, sys
 import glob
-from scipy.spatial.distance import squareform
-from data_functions import load_data_dros
 import pickle
-from sklearn.neighbors import kneighbors_graph
 
 
 ### !!!!
