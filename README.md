@@ -14,7 +14,8 @@ There are **four snakemake files**:
 
 *intronets_infer.snake*: prediction using the CNN  
 
-
+Furthermore, there are various additional scripts of the form *intronets_simulate_training_set_*; these snakemake-files create training data for the various models.
+The *500k*-versions create samples until 500k windows with introgression are added to the h5-file.
 
 the function parameters are given in 
 config_intronets_archie1.yaml

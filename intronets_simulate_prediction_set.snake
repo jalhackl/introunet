@@ -16,19 +16,12 @@ from intronets_process import *
 from intronets_windows import *
 
 
-from intronets_run import *
-
 from sstar.simulate import simulate
 
 
-
 configfile: "config_intronets_archie1_predict.yaml"
-
 model_name = "archie"
-
 output_dir = config["output_dir"]
-
-
 demo_model_file = config["simulation_yamls"]["archie"]
 
 nrep = 1000
@@ -48,7 +41,6 @@ hdf_filename = config["hdf_filename"]
 #total rep indicates the total number of replicates!!!
 total_rep =  1000
 nrep =  100
-
 nrep_folder = total_rep / nrep
 
 hdf_filename = "1mb_10_archie_random.h5"
@@ -67,7 +59,6 @@ remove_intermediate_data=True
 remove_samples_wo_introgression=False
 random_restrict=False
 random_el=1
-one_target=True
 polymorphisms=128
 stepsize=16
 only_first=False
@@ -122,9 +113,9 @@ rule all:
 
 
             if no_window == False:
-                all_entries = process_vcf_df_windowed_multiproc(new_output_dir, polymorphisms=polymorphisms, stepsize=stepsize, start_rep=start_rep, random_reg=random_restrict, random_el=random_el, ignore_zero_introgression=remove_samples_wo_introgression, only_first=only_first, one_target=one_target)
+                all_entries = process_vcf_df_windowed_multiproc(new_output_dir, polymorphisms=polymorphisms, stepsize=stepsize, start_rep=start_rep, random_reg=random_restrict, random_el=random_el, ignore_zero_introgression=remove_samples_wo_introgression, only_first=only_first)
             else:
-                all_entries = process_vcf_df_multiproc(new_output_dir, polymorphisms=polymorphisms, remove_samples_wo_introgression=remove_samples_wo_introgression, random_restrict=random_restrict, one_target=one_target)
+                all_entries = process_vcf_df_multiproc(new_output_dir, polymorphisms=polymorphisms, remove_samples_wo_introgression=remove_samples_wo_introgression, random_restrict=random_restrict)
 
             if return_data == True:
                 collected_all_entries.extend(all_entries)

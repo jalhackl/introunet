@@ -81,6 +81,18 @@ def train_model_intronets(weights, ifile, odir, net="default", n_classes=1, pick
     #net architecture is selected, 'default' indicates the net from the intronets-paper
     if net == "default":
         model = NestedUNet(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False)
+    elif net == "attention":
+        model = NestedUNetAttention(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False)
+    elif net == "attention_multi":
+        model = NestedUNetAttention(int(n_classes), 3, filter_multiplier = float(filter_multiplier), small = False)
+    elif net == "attention_multi_fwbw":
+        model = NestedUNetAttention(int(n_classes), 4, filter_multiplier = float(filter_multiplier), small = False)
+    elif net == "attentionblock":
+        model = NestedUNetAttentionBlock(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False)
+    elif net == "attentionblock":
+        model = NestedUNetAttentionBlock(int(n_classes), 3, filter_multiplier = float(filter_multiplier), small = False)
+    elif net == "attentionblock_multi_fwbw":
+        model = NestedUNetAttentionBlock(int(n_classes), 4, filter_multiplier = float(filter_multiplier), small = False)
     elif net == "multi":
         model = NestedUNet(int(n_classes), 3, filter_multiplier = float(filter_multiplier), small = False)
     elif net == "multi_fwbw":

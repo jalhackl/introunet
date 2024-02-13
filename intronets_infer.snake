@@ -2,7 +2,6 @@ import sys
 sys.path.insert(0, './')
 
 import sstar
-import utils
 import os
 import demes
 import numpy as np

@@ -15,14 +15,16 @@ from intronets_hdf_extended import *
 from intronets_process import *
 from intronets_windows import *
 
-from intronets_run import *
+
 from sstar.simulate import simulate
 
 
 configfile: "config_intronets_archie1.yaml"
 model_name = "archie"
 output_dir = config["output_dir"]
-demo_model_file = config["simulation_yamls"]["archie"]
+
+
+demo_model_file = "ArchIE_3D19_no_bottleneck.yaml"
 
 nrep = 1000
 nref = config["nref"]
@@ -38,24 +40,23 @@ output_dir = config["output_dir"]
 seed = config["seed"]
 
 hdf_filename = config["hdf_filename"]
-#total rep indicates the total number of replicates!
-total_rep =  100000
-nrep =  10000
+#total rep indicates the total number of replicates!!!
+total_rep =  1000000
+nrep =  1000
 
 nrep_folder = total_rep / nrep
 
-hdf_filename = "100k_random_wo.h5"
-new_hdf_file = hdf_filename
-output_dir = "100k_random_wo"
+model_prefix = "_archieNOBOTTLE"
+hdf_filename = "hdf_10k" + model_prefix + "_random.h5"
+new_hdf_file = "tgt50" + hdf_filename
+output_dir = "dir_hdf_10k" + model_prefix + "_random"
 
 ploidy = 2
-thread = 64
+thread = 16
 
 is_phased = True
 
-#if create_extras == True, also h5-files with additional information (position of SNPs, distances between adjacent SNPs, etc. are created)
 create_extras = True
-#if no_window == True, no windowing is applied, but solely one random (or the first) window is chosen
 no_window=False
 
 remove_intermediate_data=True
@@ -64,9 +65,11 @@ random_restrict=True
 random_el=1
 polymorphisms=128
 stepsize=16
-#if only_first, only the first window is used
 only_first=True
 return_data = False
+
+polymorphisms_list = [128,192]
+
 
 rule all:
     run:
@@ -100,8 +103,11 @@ rule all:
 
         if return_data == True:
             collected_all_entries = []
+        #global collected_all_entries
 
-        gn = 0
+        #gn = 0
+
+        gnlist = [0] * len(polymorphisms_list)
         for i in range(int(nrep_folder)):
             print("current counter i", i)
             new_output_dir = output_dir + str(i)
@@ -114,27 +120,28 @@ rule all:
 
             print("simprocess accomplished")
 
+            for ipoly, polymorphisms in enumerate(polymorphisms_list):
+                poly_prefix = str(polymorphisms) + "_"
+                if no_window == False:
+                    all_entries = process_vcf_df_windowed_multiproc(new_output_dir, polymorphisms=polymorphisms, stepsize=stepsize, random_reg=random_restrict, random_el=random_el, ignore_zero_introgression=remove_samples_wo_introgression, only_first=only_first)
+                else:
+                    all_entries = process_vcf_df_multiproc(new_output_dir, polymorphisms=polymorphisms, remove_samples_wo_introgression=remove_samples_wo_introgression, random_restrict=random_restrict)
 
-            if no_window == False:
-                all_entries = process_vcf_df_windowed_multiproc(new_output_dir, polymorphisms=polymorphisms, stepsize=stepsize, random_reg=random_restrict, random_el=random_el, ignore_zero_introgression=remove_samples_wo_introgression, only_first=only_first)
-            else:
-                all_entries = process_vcf_df_multiproc(new_output_dir, polymorphisms=polymorphisms, remove_samples_wo_introgression=remove_samples_wo_introgression, random_restrict=random_restrict)
+                if return_data == True:
+                    collected_all_entries.extend(all_entries)
 
-            if return_data == True:
-                collected_all_entries.extend(all_entries)
+                if no_window == False:
 
-            if no_window == False:
+                    if create_extras == True:
+                        create_hdf_table_extrakey_chunk3_windowed_poschannel(poly_prefix + poschannel_hdf_file, all_entries, start_nr=gnlist[ipoly])
+                        create_hdf_table_extrakey_chunk3_windowed_poschannel(poly_prefix + poschannel_scaled_hdf_file, all_entries, divide_by_seq_length=True, start_nr=gnlist[ipoly])
+                        create_hdf_table_extrakey_chunk3_windowed_gradient(poly_prefix + gradient_hdf_file, all_entries, start_nr=gnlist[ipoly])
+                        create_hdf_table_extrakey_chunk3_windowed_forward_backward(poly_prefix + fwbw_hdf_file, all_entries, start_nr=gnlist[ipoly])
 
-                if create_extras == True:
-                    create_hdf_table_extrakey_chunk3_windowed_poschannel(poschannel_hdf_file, all_entries, start_nr=gn)
-                    create_hdf_table_extrakey_chunk3_windowed_poschannel(poschannel_scaled_hdf_file, all_entries, divide_by_seq_length=True, start_nr=gn)
-                    create_hdf_table_extrakey_chunk3_windowed_gradient(gradient_hdf_file, all_entries, start_nr=gn)
-                    create_hdf_table_extrakey_chunk3_windowed_forward_backward(fwbw_hdf_file, all_entries, start_nr=gn)
+                    gnlist[ipoly] = create_hdf_table_extrakey_chunk3_windowed(poly_prefix + new_hdf_file, all_entries, start_nr=gnlist[ipoly])
+                else:
 
-                gn = create_hdf_table_extrakey_chunk3_windowed(new_hdf_file, all_entries, start_nr=gn)
-            else:
-
-                gn = create_hdf_table_extrakey_chunk3_groups(new_hdf_file, all_entries, start_nr=gn)
+                    gnlist[ipoly] = create_hdf_table_extrakey_chunk3_groups(poly_prefix + new_hdf_file, all_entries, start_nr=gnlist[ipoly])
 
 
 

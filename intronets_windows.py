@@ -5,13 +5,8 @@ from seriate import seriate
 import numpy as np
 import pandas as pd
 import allel
-#import utils
-import os
 from pathlib import Path
 
-import intronets_format
-import intronets_seriation
-import intronets_hdf
 from intronets_format import *
 from intronets_seriation import *
 from intronets_hdf import *
@@ -249,7 +244,8 @@ def get_matrices_multiproc(files, polymorphisms=128, stepsize=16, random_reg=Fal
 def process_vcf_df_windowed(folder, polymorphisms=128, stepsize=16):
     """
     Description:
-        returns an array containing - NOT used in the usual workflow, because parallelized version get_matrices_multiproc is used: 
+        NOT used in the usual workflow, because parallelized version get_matrices_multiproc is used: 
+        returns an array containing the following subarrays: 
         pop_df_ref_genotype_win: windows of reference haplotype
         pop_df_target_genotype_win: windows of target haplotype
         intro_df_ref_genotype_win: windows of reference introgression (0: no / 1: true); for unidirectional introgression, it only contains 0s
@@ -306,6 +302,11 @@ def process_vcf_df_windowed_multiproc(folder, polymorphisms=128, stepsize=16, st
         folder folder: folder containing files (vcf and bed with truth tracts)
         polymorphisms int: number of polymorphisms used for one window
         stepsize int: stepsize for the windowing process
+        start_rep int: the replicate number which is added to the first replicate of the input data, i.e. for start_rep=0, the first replicate is named 0, for start_rep=500, 500...
+        only_first bool: if True, only one window is cut out of the chromosome
+        random_reg bool: if True, the windowing process does not start at base pair 0, but windows are randomly chosen from the chromosome
+        random_el int: the number of randomly chosen windows from the chromsome (if random_reg is set to True), i.e. if random_el=1, only one window is cut out
+        ignore_zero_introgression bool: if True, only windows with introgression content are considered
     """
         
     vcf_files, bed_files = get_vcf_bed_folder(folder, ignore_zero_introgression = ignore_zero_introgression)

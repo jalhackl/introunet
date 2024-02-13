@@ -55,7 +55,7 @@ def full_format_seriate_pipeline_df_multiproc(files, fixed_nr=True, remove_sampl
 
 
 
-def process_vcf_df_multiproc(folder, fixed_nr= True,remove_samples_wo_introgression=True, polymorphisms=128, random_restrict=True,one_target=True):
+def process_vcf_df_multiproc(folder, fixed_nr= True,remove_samples_wo_introgression=True, polymorphisms=128, random_restrict=True):
     vcf_files, bed_files = get_vcf_bed_folder(folder, ignore_zero_introgression=remove_samples_wo_introgression)
     
     

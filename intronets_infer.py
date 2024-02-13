@@ -2,40 +2,19 @@ import pandas as pd
 import pickle
 import numpy as np
 import h5py
-
-import matplotlib
-#matplotlib.use('Agg')
-
 import matplotlib.pyplot as plt
-#plt.rcParams.update({'font.size': 18})
-
 import numpy as np
-import logging
-import argparse
-import os
-
 import torch
-
 import h5py
-
-import sys
-#sys.path.insert(0, os.path.join(os.getcwd(), 'src/models'))
-
 from layers import *
-from data_loaders import H5UDataGenerator
-
 from scipy.special import expit
 import pickle
-
-import seaborn as sns
 from sklearn.metrics import roc_curve, roc_auc_score, precision_recall_curve, average_precision_score, confusion_matrix, accuracy_score
 import pandas as pd
-import random
 from scipy.interpolate import interp1d
 from evaluate_unet_windowed_orig import gaussian
 
 from intronets_evaluate import *
-
 
 
 def predict_model_intronets(weights, ifile,  net="default", n_classes=1, chunk_size=4, smooth=False, filter_multiplier=1, sigma = 30, return_full = False, row_wise_addition=True, polymorphisms=128, haplotype_input=True, indiv_cutoff=True):
@@ -49,6 +28,18 @@ def predict_model_intronets(weights, ifile,  net="default", n_classes=1, chunk_s
 
     if net == "default":
         model = NestedUNet(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False, polymorphisms=polymorphisms)
+    elif net == "attention":
+        model = NestedUNetAttention(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False, polymorphisms=polymorphisms)
+    elif net == "attention_multi":
+        model = NestedUNetAttention(int(n_classes), 3, filter_multiplier = float(filter_multiplier), small = False, polymorphisms=polymorphisms)
+    elif net == "attention_multi_fwbw":
+        model = NestedUNetAttention(int(n_classes), 4, filter_multiplier = float(filter_multiplier), small = False, polymorphisms=polymorphisms)
+    elif net == "attentionblock":
+        model = NestedUNetAttentionBlock(int(n_classes), 2, filter_multiplier = float(filter_multiplier), small = False)
+    elif net == "attentionblock":
+        model = NestedUNetAttentionBlock(int(n_classes), 3, filter_multiplier = float(filter_multiplier), small = False)
+    elif net == "attentionblock_multi_fwbw":
+        model = NestedUNetAttentionBlock(int(n_classes), 4, filter_multiplier = float(filter_multiplier), small = False)
     elif net == "multi":
         model = NestedUNet(int(n_classes), 3, filter_multiplier = float(filter_multiplier), small = False, polymorphisms=polymorphisms)
     elif net == "multi_fwbw":

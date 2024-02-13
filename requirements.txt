@@ -3,7 +3,7 @@ h5py
 matplotlib
 numpy
 pandas
-scikit_learn
+scikit-learn
 scipy
 seaborn
 seriate==1.1.2
