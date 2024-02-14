@@ -226,7 +226,7 @@ class ResBlock(nn.Module):
 
 class AttentionResBlock(nn.Module):
     def __init__(self, in_channels, out_channels, k = 3, n_layers = 2, pooling = 'max'):
-        super(ResBlock, self).__init__()
+        super(AttentionResBlock, self).__init__()
 
         self.convs = nn.ModuleList()
         self.norms = nn.ModuleList()
@@ -727,14 +727,14 @@ class NestedUNetExtraPos(nn.Module):
 #    Self-Attention-GAN, slightly adapted https://github.com/heykeetae/Self-Attention-GAN/tree/master
 class SelfAttention(nn.Module):
     """ Self attention Layer"""
-    def __init__(self,in_dim,activation, query_key_out_channels=None):
+    def __init__(self,in_dim, query_key_out_channels=None):
         super(SelfAttention,self).__init__()
 
         if query_key_out_channels == None:
             query_key_out_channels = in_dim//8
 
         #self.chanel_in = in_dim
-        self.activation = activation
+        #self.activation = activation
         
         self.query_conv = nn.Conv2d(in_channels = in_dim , out_channels = query_key_out_channels , kernel_size= 1)
         self.key_conv = nn.Conv2d(in_channels = in_dim , out_channels = query_key_out_channels , kernel_size= 1)
