@@ -3,6 +3,7 @@ sys.path.insert(0, './')
 
 import sstar
 import os
+import shutil
 import demes
 import numpy as np
 import pandas as pd

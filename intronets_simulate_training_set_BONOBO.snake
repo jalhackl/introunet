@@ -3,6 +3,7 @@ sys.path.insert(0, './')
 
 import sstar
 import os
+import shutil
 import demes
 import numpy as np
 import pandas as pd
@@ -15,14 +16,12 @@ from intronets_hdf_extended import *
 from intronets_process import *
 from intronets_windows import *
 
-
 from sstar.simulate import simulate
 
 
 configfile: "config_intronets_archie1.yaml"
 model_name = "BonoboGhost"
 output_dir = config["output_dir"]
-
 
 demo_model_file = "BonoboGhost_4K19.yaml"
 

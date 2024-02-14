@@ -3,6 +3,7 @@ sys.path.insert(0, './')
 
 import sstar
 import os
+import shutil
 import demes
 import numpy as np
 import pandas as pd
@@ -14,9 +15,6 @@ from intronets_hdf import *
 from intronets_hdf_extended import *
 from intronets_process import *
 from intronets_windows import *
-
-
-from intronets_run import *
 
 from sstar.simulate import simulate
 

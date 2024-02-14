@@ -16,8 +16,6 @@ from intronets_process import *
 from intronets_windows import *
 
 
-from intronets_run import *
-
 from intronets_train import *
 from intronets_infer import *
 

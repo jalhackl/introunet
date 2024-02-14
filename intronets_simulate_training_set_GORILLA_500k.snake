@@ -3,6 +3,7 @@ sys.path.insert(0, './')
 
 import sstar
 import os
+import shutil
 import demes
 import numpy as np
 import pandas as pd
@@ -22,7 +23,6 @@ from sstar.simulate import simulate
 configfile: "config_intronets_archie1.yaml"
 model_name = "GorillaGhost"
 output_dir = config["output_dir"]
-
 
 demo_model_file = "GorillaGhost_5P23.yaml"
 
