@@ -240,7 +240,7 @@ class AttentionResBlock(nn.Module):
     
         self.activation = nn.ELU()
 
-        self.intial_attention = SelfAttention(in_channels)
+        self.initial_attention = SelfAttention(in_channels)
         
     def forward(self, x, return_unpooled = False):
         x = self.initial_attention(x)
