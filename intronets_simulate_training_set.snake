@@ -15,7 +15,6 @@ from intronets_hdf_extended import *
 from intronets_process import *
 from intronets_windows import *
 
-from intronets_run import *
 from sstar.simulate import simulate
 
 
