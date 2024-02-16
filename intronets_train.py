@@ -113,6 +113,11 @@ def train_model_intronets(weights, ifile, odir, net="default", n_classes=1, pick
 
     print(model, file = log_file, flush=True)
     model = model.to(device)
+
+    if weights is not None:
+        checkpoint = torch.load(weights, map_location = device)
+        model.load_state_dict(checkpoint)
+
     
     #not fully implemented yet - and probably not necessary, because pickled numpy arrays are preferably not used
     if pickle_load == True:
