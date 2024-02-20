@@ -6,13 +6,13 @@ import numpy as np
 import pandas as pd
 import allel
 from pathlib import Path
-
+from functools import partial
 from intronets_format import *
 from intronets_seriation import *
 from intronets_hdf import *
 
 from concurrent.futures import ProcessPoolExecutor as Pool
-
+from sstar.simulate import simulate
 
 
 def get_matrices(vcf_file, bed_file, chr_nr=None, polymorphisms=128, stepsize=16, remove_samples_wo_introgression=False):
@@ -291,7 +291,7 @@ def process_vcf_df_windowed(folder, polymorphisms=128, stepsize=16):
 
 
 
-def process_vcf_df_windowed_multiproc(folder, polymorphisms=128, stepsize=16, start_rep=0, only_first=False, random_reg=False, random_el=1, ignore_zero_introgression=True):
+def process_vcf_df_windowed_multiproc(folder, polymorphisms=128, stepsize=16, start_rep=0, only_first=False, random_reg=False, random_el=1, ignore_zero_introgression=True, list_of_folders=False):
     """
     Description:
         processes all pairs of vcf- and bed- files in all subdirectories of the input folder
@@ -309,9 +309,17 @@ def process_vcf_df_windowed_multiproc(folder, polymorphisms=128, stepsize=16, st
         ignore_zero_introgression bool: if True, only windows with introgression content are considered
     """
         
-    vcf_files, bed_files = get_vcf_bed_folder(folder, ignore_zero_introgression = ignore_zero_introgression)
-    
-    from functools import partial
+
+    #list_of_folders == True is necessary for the simulaton batches, i.e. when the simulations are stored in a subfolder
+    if list_of_folders == False:
+        vcf_files, bed_files = get_vcf_bed_folder(folder, ignore_zero_introgression = ignore_zero_introgression)
+    else:
+        vcf_files = []
+        bed_files = []
+        for one_folder in folder:
+            vcf_files_one_folder, bed_files_one_folder = get_vcf_bed_folder(one_folder, ignore_zero_introgression = ignore_zero_introgression)
+            vcf_files.extend(vcf_files_one_folder)
+            bed_files.extend(bed_files_one_folder)
 
     
     all_entries = []
@@ -352,5 +360,39 @@ def process_vcf_df_windowed_multiproc(folder, polymorphisms=128, stepsize=16, st
 
 
 
+def simulation_batch_pool(new_output_dirs, demo_model_file, inner_nrep, nref, ntgt, ref_id, tgt_id, src_id, ploidy, seq_len, mut_rate, rec_rate, thread, feature_config, is_phased, output_prefix, seed):
+    
+    new_output_dir = new_output_dirs
+  
+    
+    simulate(demo_model_file=demo_model_file, nrep=inner_nrep, nref=nref, ntgt=ntgt, 
+                 ref_id=ref_id, tgt_id=tgt_id, src_id=src_id, ploidy=ploidy, seq_len=seq_len, mut_rate=mut_rate, rec_rate=rec_rate, thread=thread,
+                 feature_config=None, is_phased=is_phased, intro_prop=0.7, not_intro_prop=0.3, keep_sim_data=True,
+                 output_prefix=output_prefix, output_dir=new_output_dir, seed=None)
+    
+    #return value just indicates that the simulation started 
+    return True
 
+
+def process_simulations(new_output_dir, inner_batch_size, demo_model_file, inner_nrep, nref, ntgt, 
+                        ref_id, tgt_id, src_id, ploidy, seq_len, mut_rate, rec_rate, thread, is_phased,
+                        output_prefix,  seed, feature_config=None):
+    #all simulation subfolders
+    new_output_dirs = [os.path.join(new_output_dir,  new_output_dir + str(x)) for x in range(inner_batch_size)]
+
+
+    create_simulation_batch=partial(simulation_batch_pool, demo_model_file=demo_model_file, inner_nrep=inner_nrep, nref=nref, ntgt=ntgt, ref_id=ref_id, tgt_id=tgt_id, src_id=src_id, ploidy=ploidy, seq_len=seq_len, mut_rate=mut_rate, rec_rate=rec_rate, thread=thread, feature_config=feature_config, is_phased=is_phased, output_prefix=output_prefix, seed=seed)
+
+    import multiprocessing as mp
+    #create a new pool for distributing the simulation tasks
+    pool = Pool(mp_context=mp.get_context('spawn'))       
+    #compute an efficient to chunksize to distribute the simulations to the cpus
+    size = int(max(1, round(len(new_output_dirs) // pool._max_workers)))
+    #send tasks to the pool
+    simulation_done = pool.map(create_simulation_batch, new_output_dirs, chunksize=size)
+    #simulation_done checks only that all simulations have finished
+    simulation_done = list(simulation_done)
+
+    #new_output_dirs contain only the newly created folders
+    return new_output_dirs
 
