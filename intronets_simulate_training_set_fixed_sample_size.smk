@@ -53,6 +53,7 @@ is_phased = True
 #if create_extras == True, also h5-files with additional information (position of SNPs, distances between adjacent SNPs, etc. are created)
 create_extras = True
 #if no_window == True, no windowing is applied, but solely one random (or the first) window is chosen
+#this script currently works only with no_window=False
 no_window=False
 
 remove_intermediate_data=True
@@ -145,7 +146,7 @@ rule all:
             for ipoly, polymorphisms in enumerate(polymorphisms_list):
                 poly_prefix = str(polymorphisms) + "_"
                 if no_window == False:
-                    all_entries = process_vcf_df_windowed_multiproc(new_output_dir, polymorphisms=polymorphisms, stepsize=stepsize, random_reg=random_restrict, random_el=random_el, ignore_zero_introgression=remove_samples_wo_introgression, only_first=only_first)
+                    all_entries = process_vcf_df_windowed_multiproc(new_output_dirs, polymorphisms=polymorphisms, stepsize=stepsize, random_reg=random_restrict, random_el=random_el, ignore_zero_introgression=remove_samples_wo_introgression, only_first=only_first, list_of_folders=True)
                 else:
                     all_entries = process_vcf_df_multiproc(new_output_dir, polymorphisms=polymorphisms, remove_samples_wo_introgression=remove_samples_wo_introgression, random_restrict=random_restrict)
 
