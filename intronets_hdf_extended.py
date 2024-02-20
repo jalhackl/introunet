@@ -57,12 +57,9 @@ def create_hdf_table_extrakey_chunk3_windowed_poschannel(hdf_file, input_entries
 
                 features = entry[0]
                 labels = entry[1]
-                
 
                 startposition = entry[3]
                 endposition = entry[4]
-
-
 
                 #positions should be -1 now
                 onepos = entry[-1]
@@ -78,7 +75,6 @@ def create_hdf_table_extrakey_chunk3_windowed_poschannel(hdf_file, input_entries
                 features = np.concatenate([features, oneposbroad])
 
                 dset1[k] = features
-                #dset2[k][0] = labels
                 
                 dset2[k] = [labels]
                 
@@ -105,7 +101,6 @@ def create_hdf_table_extrakey_chunk3_windowed_gradient(hdf_file, input_entries, 
     act_shape2 = input_entries[0][2].shape
     act_shape3 = input_entries[0][3].shape
 
-    #with h5py.File(hdf_file, 'w') as h5f:
     #create if not existent, otherwise add entries
     with h5py.File(hdf_file, 'a') as h5f:
 
@@ -113,31 +108,25 @@ def create_hdf_table_extrakey_chunk3_windowed_gradient(hdf_file, input_entries, 
             
             dset1 = h5f.create_dataset(str(i+start_nr) + "/" + x_name,
                                    shape=(chunk_size, act_shape0[0]+1, act_shape0[1], act_shape0[2]),
-                                   #shape=(num_lines, num_features),
-                               #    shape=(num_lines,),
                                    compression='lzf',
                                    dtype=float)
             dset2 = h5f.create_dataset(str(i+start_nr) + "/" + y_name,
                                        shape=(chunk_size, 1, act_shape1[0], act_shape1[1]),
-                                   #    shape=(num_lines,),
                                        compression='lzf',
                                        dtype=np.uint8)
             
             dset3 = h5f.create_dataset(str(i+start_nr) + "/" + ind_name,
                                        shape=(chunk_size, act_shape2[0], act_shape2[1], act_shape2[2]),
-                                   #    shape=(num_lines,),
                                        compression='lzf',
                                        dtype=np.uint32)
             
             dset4 = h5f.create_dataset(str(i+start_nr) + "/" + pos_name,
                                        shape=(chunk_size, 1, act_shape3[0], act_shape3[1]),
-                                   #    shape=(num_lines,),
                                        compression='lzf',
                                        dtype=np.uint32)
 
             dset5 = h5f.create_dataset(str(i+start_nr) + "/" + ix_name,
                             shape=(chunk_size, 1, 1),
-                        #    shape=(num_lines,),
                             compression='lzf',
                             dtype=np.uint32)
             
@@ -191,31 +180,25 @@ def create_hdf_table_extrakey_chunk3_windowed_forward_backward(hdf_file, input_e
             
             dset1 = h5f.create_dataset(str(i+start_nr) + "/" + x_name,
                                    shape=(chunk_size, act_shape0[0]+2, act_shape0[1], act_shape0[2]),
-                                   #shape=(num_lines, num_features),
-                               #    shape=(num_lines,),
                                    compression='lzf',
                                    dtype=np.uint32)
             dset2 = h5f.create_dataset(str(i+start_nr) + "/" + y_name,
                                        shape=(chunk_size, 1, act_shape1[0], act_shape1[1]),
-                                   #    shape=(num_lines,),
                                        compression='lzf',
                                        dtype=np.uint8)
             
             dset3 = h5f.create_dataset(str(i+start_nr) + "/" + ind_name,
                                        shape=(chunk_size, act_shape2[0], act_shape2[1], act_shape2[2]),
-                                   #    shape=(num_lines,),
                                        compression='lzf',
                                        dtype=np.uint32)
             
             dset4 = h5f.create_dataset(str(i+start_nr) + "/" + pos_name,
                                        shape=(chunk_size, 1, act_shape3[0], act_shape3[1]),
-                                   #    shape=(num_lines,),
                                        compression='lzf',
                                        dtype=np.uint32)
 
             dset5 = h5f.create_dataset(str(i+start_nr) + "/" + ix_name,
                             shape=(chunk_size, 1, 1),
-                        #    shape=(num_lines,),
                             compression='lzf',
                             dtype=np.uint32)
             
@@ -227,13 +210,11 @@ def create_hdf_table_extrakey_chunk3_windowed_forward_backward(hdf_file, input_e
                 features = entry[0]
                 labels = entry[1]
                 
-
                 #positions should be -1 now
                 onepos = entry[-1]
 
                 startposition = entry[3]
                 endposition = entry[4]
-
 
                 diff1 = np.diff(onepos, prepend=[onepos[0]])
                 diff2 = np.diff(onepos, append=[onepos[-1]])
