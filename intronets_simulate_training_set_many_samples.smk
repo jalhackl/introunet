@@ -51,6 +51,7 @@ is_phased = True
 #if create_extras == True, also h5-files with additional information (position of SNPs, distances between adjacent SNPs, etc. are created)
 create_extras = True
 #if no_window == True, no windowing is applied, but solely one random (or the first) window is chosen
+#this script currently works only with no_window=False
 no_window=False
 
 remove_intermediate_data=True
