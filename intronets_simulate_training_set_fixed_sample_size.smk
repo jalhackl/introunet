@@ -117,8 +117,9 @@ rule all:
         if return_data == True:
             collected_all_entries = []
 
-        #gn counts the replicate number for the h5-dataframe
-        gn = 0
+        #gnlist counts the replicate/group number for the h5-dataframe
+        #has to be done for each polymorphism (usually it should be the same number for each entry; however, it could happen that the chromosome is too short for longer windows so that the number is different)
+        gnlist = [0] * len(polymorphisms_list)
 
         #additional iteration counter
         i = 0
