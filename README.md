@@ -1,5 +1,18 @@
 # sstar2-analysis
 
+
+There are **two snakemake files for simulating**:
+
+*intronets_simulate_training_set_many_samples.smk*: for fixed-size simulations (this means that, e.g., 100k simulations lead to a lower number of final samples because usually many of the samples do not feature any introgression)
+
+*intronets_simulate_training_set_fixed_sample_size.smk*: This snakemake-file simulates until the desired number of simulation samples is obtained
+
+In both snakemake files, a new function (*process_simulations*) in *intronets_windows.py* is called; this function distributes the cpus/processes to different simulation batches which are performed in parallel
+
+
+
+----------------------------
+
 There are **four snakemake files**:  
 
 
