@@ -1,31 +1,28 @@
-output_dir: "intermediate_resb"
-seed: None
+seed: 12345
+output_dir: "results/training_data"
+output_prefix: "archie_rep_model"
 seq_len: 50000
-1src_demo_models: ['archie']
-
-folder_names: ['archie']
-
-mutation_rates: {'archie': 1.25e-8}
-recombination_rates: {'archie': 1e-8}
-
-src_ids: {'archie': 'Ghost'}
-ref_ids: {'archie': 'Ref'}
-tgt_ids: {'archie':'Tgt'}
-
-simulation_yamls: {'archie' : 'ArchIE_3D19.yaml'}
-
+nrep: 100
+total_rep: 100000
+demes: 'ArchIE_3D19.yaml'
+demog_id: 'ArchIE_3D19'
+ploidy: 2
+mut_rate: 1.25e-8
+rec_rate: 1e-8
+ref_id: 'Ref'
+tgt_id: 'Tgt'
+src_id: 'Ghost'
 nref: 50
 ntgt: 50
-nrep: 100
-total_rep: 1000
-
-ploidy: 2
-
+is_phased: True
 polymorphisms: 128
-stepsize: 16
-
 remove_samples_wo_introgression: True
-
-threads: 6
-
-hdf_filename: "hdf_1b.h5"
+random_restrict: True
+no_window: False
+stepsize: 16
+random_el: 1
+only_first: True
+return_data: False
+create_extras: True
+remove_intermediate_data: True
+hdf_filename: "100k_random_wo.h5"

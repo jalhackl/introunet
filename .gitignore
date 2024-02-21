@@ -1,1 +1,6 @@
 __pycache__/*
+100k_random_*/*
+results*
+.snakemake/*
+*.h5
+*.out
