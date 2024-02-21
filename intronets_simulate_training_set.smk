@@ -28,16 +28,16 @@ is_phased = config["is_phased"]
 
 hdf_filename = config["hdf_filename"]
 
-polymorphisms = config["polymorphisms"],
-remove_samples_wo_introgression = config["remove_samples_wo_introgression"],
-random_restrict = config["random_restrict"],
-no_window = config["no_window"], #if no_window == True, no windowing is applied, but solely one random (or the first) window is chosen
-stepsize = config["stepsize"],
-random_el = config["random_el"],
-only_first = config["only_first"], #if only_first, only the first window is used
-return_data = config["return_data"],
-create_extras = config["create_extras"], #if create_extras == True, also h5-files with additional information (position of SNPs, distances between adjacent SNPs, etc. are created)
-remove_intermediate_data = config["remove_intermediate_data"],
+polymorphisms = config["polymorphisms"]
+remove_samples_wo_introgression = config["remove_samples_wo_introgression"]
+random_restrict = config["random_restrict"]
+no_window = config["no_window"] #if no_window == True, no windowing is applied, but solely one random (or the first) window is chosen
+stepsize = config["stepsize"]
+random_el = config["random_el"]
+only_first = config["only_first"] #if only_first, only the first window is used
+return_data = config["return_data"]
+create_extras = config["create_extras"] #if create_extras == True, also h5-files with additional information (position of SNPs, distances between adjacent SNPs, etc. are created)
+remove_intermediate_data = config["remove_intermediate_data"]
 
 np.random.seed(config["seed"])
 seed_list = np.random.random_integers(1, 2**31, nrep_folder)
@@ -84,16 +84,16 @@ rule create_h5_files:
         poschannel_scaled_hdf_file = output_dir + "/poschannel_scaled_100k_random_wo.h5",
     params:
         folders = expand(output_dir + "/100k_random_wo{nrep_folder}", nrep_folder=nrep_folder_list),
-        polymorphisms = polymorphisms[0],
-        remove_samples_wo_introgression = remove_samples_wo_introgression[0],
-        random_restrict = random_restrict[0],
-        no_window = no_window[0],
-        stepsize = stepsize[0],
-        random_el = random_el[0],
-        only_first = only_first[0],
-        return_data = return_data[0],
-        create_extras = create_extras[0],
-        remove_intermediate_data = remove_intermediate_data[0],
+        polymorphisms = polymorphisms,
+        remove_samples_wo_introgression = remove_samples_wo_introgression,
+        random_restrict = random_restrict,
+        no_window = no_window,
+        stepsize = stepsize,
+        random_el = random_el,
+        only_first = only_first,
+        return_data = return_data,
+        create_extras = create_extras,
+        remove_intermediate_data = remove_intermediate_data,
     resources:
         time = 180,
     run:
