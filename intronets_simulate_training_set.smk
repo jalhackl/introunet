@@ -84,16 +84,6 @@ rule create_h5_files:
         poschannel_scaled_hdf_file = output_dir + "/poschannel_scaled_100k_random_wo.h5",
     params:
         folders = expand(output_dir + "/100k_random_wo{nrep_folder}", nrep_folder=nrep_folder_list),
-        polymorphisms = polymorphisms,
-        remove_samples_wo_introgression = remove_samples_wo_introgression,
-        random_restrict = random_restrict,
-        no_window = no_window,
-        stepsize = stepsize,
-        random_el = random_el,
-        only_first = only_first,
-        return_data = return_data,
-        create_extras = create_extras,
-        remove_intermediate_data = remove_intermediate_data,
     resources:
         time = 180,
     run:
@@ -101,13 +91,13 @@ rule create_h5_files:
 
         gn = 0
         for f in params.folders:
-            if params.no_window is False:
-                all_entries = process_vcf_df_windowed_multiproc(f, polymorphisms=params.polymorphisms, stepsize=params.stepsize, 
-                                                                random_reg=params.random_restrict, random_el=params.random_el, 
-                                                                ignore_zero_introgression=params.remove_samples_wo_introgression, 
-                                                                only_first=params.only_first)
+            if no_window is False:
+                all_entries = process_vcf_df_windowed_multiproc(f, polymorphisms=polymorphisms, stepsize=stepsize, 
+                                                                random_reg=random_restrict, random_el=random_el, 
+                                                                ignore_zero_introgression=remove_samples_wo_introgression, 
+                                                                only_first=only_first)
 
-                if params.create_extras is True:
+                if create_extras is True:
                     create_hdf_table_extrakey_chunk3_windowed_poschannel(output.poschannel_hdf_file, all_entries, start_nr=gn)
                     create_hdf_table_extrakey_chunk3_windowed_poschannel(output.poschannel_scaled_hdf_file, all_entries, divide_by_seq_length=True, start_nr=gn)
                     create_hdf_table_extrakey_chunk3_windowed_gradient(output.gradient_hdf_file, all_entries, start_nr=gn)
@@ -115,14 +105,14 @@ rule create_h5_files:
 
                 gn = create_hdf_table_extrakey_chunk3_windowed(output.hdf_file, all_entries, start_nr=gn)
             else:
-                all_entries = process_vcf_df_multiproc(f, polymorphisms=params.polymorphisms, 
-                                                       remove_samples_wo_introgression=params.remove_samples_wo_introgression, 
-                                                       random_restrict=params.random_restrict)
+                all_entries = process_vcf_df_multiproc(f, polymorphisms=polymorphisms, 
+                                                       remove_samples_wo_introgression=remove_samples_wo_introgression, 
+                                                       random_restrict=random_restrict)
                 gn = create_hdf_table_extrakey_chunk3_groups(output.hdf_file, all_entries, start_nr=gn)
 
-            if params.return_data == True:
+            if return_data == True:
                 collected_all_entries = []
                 collected_all_entries.extend(all_entries)
 
-            if params.remove_intermediate_data == True:
+            if remove_intermediate_data == True:
                 shutil.rmtree(f)
