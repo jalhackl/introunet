@@ -62,7 +62,7 @@ rule simulate_training_data:
     output:
         flag = output_dir + "/100k_random_wo{nrep_folder}/.sim.completed",
     params:
-        is_phased = '--phased' if is_phased is True else '',
+        is_phased = '--phased' if is_phased else '',
         nrep = nrep,
         output_dir = output_dir + "/100k_random_wo{nrep_folder}",
         seed = lambda wildcards: seed_list[int(wildcards.nrep_folder)],
