@@ -1,22 +1,6 @@
 import sys
 sys.path.insert(0, './')
 
-import sstar
-import os
-import demes
-import numpy as np
-import pandas as pd
-from scipy.stats import norm
-from scipy.stats import nbinom
-
-from intronets_format import *
-from intronets_hdf import *
-from intronets_hdf_extended import *
-from intronets_process import *
-from intronets_windows import *
-
-
-from intronets_run import *
 
 from intronets_train import *
 
@@ -29,17 +13,17 @@ model_name = "archie"
 output_dir = config["output_dir"]
 
 
-demo_model_file = config["simulation_yamls"]["archie"]
+demo_model_file = config["demes"]
 
 nrep = 1000
 nref = 50
 ntgt= 50
-ref_id = config["ref_ids"]["archie"]
-tgt_id = config["tgt_ids"]["archie"]
-src_id = config["src_ids"]["archie"]
+ref_id = config["ref_id"]
+tgt_id = config["tgt_id"]
+src_id = config["src_id"]
 seq_len = config["seq_len"]
-mut_rate = config["mutation_rates"]["archie"]
-rec_rate = config["recombination_rates"]["archie"]
+mut_rate = config["mut_rate"]
+rec_rate = config["rec_rate"]
 thread = 32
 output_prefix = "archie_rep_model"
 output_dir = config["output_dir"]
@@ -50,7 +34,7 @@ hdf_filename = config["hdf_filename"]
 total_rep =  config["total_rep"]
 nrep =  config["nrep"]
 
-prefixname = "1000k_random_wo"
+prefixname = "results/training_data/1000k_random_wo"
 hdf_filename = prefixname +".h5"
 output_dir = prefixname + "normal_net"
 
