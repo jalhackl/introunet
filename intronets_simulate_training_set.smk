@@ -1,10 +1,9 @@
 import sys
 sys.path.insert(0, './')
 
-from intronets_hdf import *
-from intronets_hdf_extended import *
-from intronets_process import *
-from intronets_windows import *
+
+### CONFIG ###
+
 
 configfile: "config_intronets_archie1.yaml"
 
@@ -43,6 +42,9 @@ np.random.seed(config["seed"])
 seed_list = np.random.random_integers(1, 2**31, nrep_folder)
 
 nrep_folder_list = [x for x in range(nrep_folder)]
+
+
+### RULES ###
 
 
 rule all:
@@ -88,6 +90,10 @@ rule create_h5_files:
         time = 180,
     run:
         import shutil
+        from intronets_hdf import *
+        from intronets_hdf_extended import *
+        from intronets_process import *
+        from intronets_windows import *
 
         gn = 0
         for f in params.folders:
