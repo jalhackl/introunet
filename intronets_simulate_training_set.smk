@@ -97,13 +97,15 @@ rule create_h5_files:
 
         gn = 0
         for f in params.folders:
-            if no_window is False:
+            # PEP8: Don’t compare boolean values to True or False using ==
+            # https://peps.python.org/pep-0008/
+            if not no_window:
                 all_entries = process_vcf_df_windowed_multiproc(f, polymorphisms=polymorphisms, stepsize=stepsize, 
                                                                 random_reg=random_restrict, random_el=random_el, 
                                                                 ignore_zero_introgression=remove_samples_wo_introgression, 
                                                                 only_first=only_first)
 
-                if create_extras is True:
+                if create_extras:
                     create_hdf_table_extrakey_chunk3_windowed_poschannel(output.poschannel_hdf_file, all_entries, start_nr=gn)
                     create_hdf_table_extrakey_chunk3_windowed_poschannel(output.poschannel_scaled_hdf_file, all_entries, divide_by_seq_length=True, start_nr=gn)
                     create_hdf_table_extrakey_chunk3_windowed_gradient(output.gradient_hdf_file, all_entries, start_nr=gn)
@@ -116,9 +118,9 @@ rule create_h5_files:
                                                        random_restrict=random_restrict)
                 gn = create_hdf_table_extrakey_chunk3_groups(output.hdf_file, all_entries, start_nr=gn)
 
-            if return_data == True:
+            if return_data:
                 collected_all_entries = []
                 collected_all_entries.extend(all_entries)
 
-            if remove_intermediate_data == True:
+            if remove_intermediate_data:
                 shutil.rmtree(f)
