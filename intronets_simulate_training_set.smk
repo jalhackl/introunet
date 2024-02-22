@@ -1,6 +1,8 @@
 import sys
 sys.path.insert(0, './')
 
+import numpy as np
+
 
 ### CONFIG ###
 
@@ -90,10 +92,10 @@ rule create_h5_files:
         time = 180,
     run:
         import shutil
-        from intronets_hdf import *
-        from intronets_hdf_extended import *
-        from intronets_process import *
-        from intronets_windows import *
+        from intronets_hdf import create_hdf_table_extrakey_chunk3_windowed, create_hdf_table_extrakey_chunk3_groups
+        from intronets_hdf_extended import create_hdf_table_extrakey_chunk3_windowed_poschannel, create_hdf_table_extrakey_chunk3_windowed_gradient, create_hdf_table_extrakey_chunk3_windowed_forward_backward
+        from intronets_process import process_vcf_df_multiproc
+        from intronets_windows import process_vcf_df_windowed_multiproc
 
         gn = 0
         for f in params.folders:
