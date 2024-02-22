@@ -4,16 +4,22 @@ sys.path.insert(0, './')
 import numpy as np
 
 
-### CONFIG ###
+## CONFIG
 
 
 configfile: "config_intronets_archie1.yaml"
+
+np.random.seed(config["seed"])
+seed_list = np.random.random_integers(1, 2**31, nrep_folder)
 
 output_dir = config["output_dir"]
 output_prefix = config["output_prefix"]
 nrep = config["nrep"]
 total_rep = config["total_rep"]
 nrep_folder = int(total_rep / nrep)
+nrep_folder_list = [x for x in range(nrep_folder)]
+
+### Config for rule simulating_training_data
 
 demo_model_file = config["demes"]
 nref = config["nref"]
@@ -26,6 +32,8 @@ mut_rate = config["mut_rate"]
 rec_rate = config["rec_rate"]
 ploidy = config["ploidy"]
 is_phased = config["is_phased"]
+
+### Config for rule create_h5_files
 
 hdf_filename = config["hdf_filename"]
 
@@ -40,13 +48,8 @@ return_data = config["return_data"]
 create_extras = config["create_extras"] #if create_extras == True, also h5-files with additional information (position of SNPs, distances between adjacent SNPs, etc. are created)
 remove_intermediate_data = config["remove_intermediate_data"]
 
-np.random.seed(config["seed"])
-seed_list = np.random.random_integers(1, 2**31, nrep_folder)
 
-nrep_folder_list = [x for x in range(nrep_folder)]
-
-
-### RULES ###
+## RULES
 
 
 rule all:
