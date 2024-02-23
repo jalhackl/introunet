@@ -4,10 +4,6 @@ sys.path.insert(0, './')
 import numpy as np
 import os
 import shutil
-from intronets_hdf import create_hdf_table_extrakey_chunk3_windowed, create_hdf_table_extrakey_chunk3_groups
-from intronets_hdf_extended import create_hdf_table_extrakey_chunk3_windowed_poschannel, create_hdf_table_extrakey_chunk3_windowed_gradient, create_hdf_table_extrakey_chunk3_windowed_forward_backward
-from intronets_process import process_vcf_df_multiproc
-from intronets_windows import process_vcf_df_windowed_multiproc, process_simulations
 
 
 ## CONFIG
@@ -68,7 +64,11 @@ rule create_dataframes_prediction:
         cpus = 16, partition="basic",
         time = 3000,
     run:
-        os.makedirs(output_dir, exist_ok=True)
+        from intronets_hdf import create_hdf_table_extrakey_chunk3_windowed, create_hdf_table_extrakey_chunk3_groups
+        from intronets_hdf_extended import create_hdf_table_extrakey_chunk3_windowed_poschannel, create_hdf_table_extrakey_chunk3_windowed_gradient, create_hdf_table_extrakey_chunk3_windowed_forward_backward
+        from intronets_process import process_vcf_df_multiproc
+        from intronets_windows import process_vcf_df_windowed_multiproc, process_simulations
+
         #nrep_folder indicates how many iterations are necessary (each having nrep simulations) to perform the desired number of simulations
         nrep_folder = total_rep / nrep
         if nrep_folder < 1:
@@ -81,7 +81,7 @@ rule create_dataframes_prediction:
         inner_nrep = int(max(nrep/inner_batch_size, 1))
 
 
-        if return_data == True:
+        if return_data:
             collected_all_entries = []
 
         gn = 0
