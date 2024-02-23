@@ -28,9 +28,11 @@ create_extras: True
 remove_intermediate_data: True
 hdf_filename: "introunet_archie_rep.h5"
 training_dir: "results/trained_introunet_rep"
+output_dir_prediction: "results/prediction_data"
 seq_len_prediction: 1000000
 nrep_prediction: 100
 total_rep_prediction: 1000
 inner_batch_size_prediction: 10
 hdf_filename_prediction: "introunet_archie_rep_prediction.h5"
 prediction_dir: "results/inference"
+
