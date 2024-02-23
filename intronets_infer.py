@@ -17,7 +17,7 @@ from evaluate_unet_windowed_orig import gaussian
 from intronets_evaluate import *
 
 
-def predict_model_intronets(weights, ifile,  net="default", n_classes=1, chunk_size=4, smooth=False, filter_multiplier=1, sigma = 30, return_full = False, row_wise_addition=True, polymorphisms=128, haplotype_input=True, indiv_cutoff=True):
+def predict_model_intronets(weights, ifile,  net="default", output_folder="", n_classes=1, chunk_size=4, smooth=False, filter_multiplier=1, sigma = 30, return_full = False, row_wise_addition=True, polymorphisms=128, haplotype_input=True, indiv_cutoff=True):
     if torch.cuda.is_available():
         device = torch.device('cuda')
     else:
@@ -258,7 +258,7 @@ def predict_model_intronets(weights, ifile,  net="default", n_classes=1, chunk_s
     plt.xlabel("recall")
     plt.ylabel("precision")
     plt.legend()
-    plt.savefig(filename.split('.')[0] + "_simple_eval_" + weight_folder_name + ".png")
+    plt.savefig(os.path.join(output_folder, filename.split('.')[0] + "_simple_eval_" + weight_folder_name + ".png"))
     plt.figure()
 
     #preparing final arrays
@@ -285,7 +285,7 @@ def predict_model_intronets(weights, ifile,  net="default", n_classes=1, chunk_s
     plt.xlabel("recall")
     plt.ylabel("precision")
     plt.legend()
-    plt.savefig(filename.split('.')[0] + "_full_eval" + weight_folder_name + ".png")
+    plt.savefig(os.path.join(filename.split('.')[0] + "_full_eval" + weight_folder_name + ".png"))
 
     prec_recall_file = filename.split('.')[0] + "_full_eval" + weight_folder_name + ".pickle"
     prec_recall_file_simple = filename.split('.')[0] + "_simple_eval" + weight_folder_name + ".pickle"
@@ -296,7 +296,7 @@ def predict_model_intronets(weights, ifile,  net="default", n_classes=1, chunk_s
 
     #optional creating of precision recall curves for specific cutoff
     if indiv_cutoff == True:
-        intronets_evaluate_cutoffs([full_arr_true_flattened_nonzero], [final_expit], cutoff_list = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.99], plot=True, save_plot=True, save_numbers=True, plot_title="precision recall curve", plot_filename=filename.split('.')[0] + "_cutoffs_" + weight_folder_name + ".png" , numbers_filename=filename.split('.')[0] + "_cutoffs_" + weight_folder_name + ".png")
+        intronets_evaluate_cutoffs([full_arr_true_flattened_nonzero], [final_expit], cutoff_list = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.99], plot=True, save_plot=True, save_numbers=True, plot_title="precision recall curve", plot_filename=os.path.join(output_folder, filename.split('.')[0] + "_cutoffs_" + weight_folder_name + ".png") , numbers_filename=os.path.join(output_folder, filename.split('.')[0] + "_cutoffs_" + weight_folder_name + ".png"))
 
 
     if return_full == False:

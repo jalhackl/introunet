@@ -1,39 +1,39 @@
 # sstar2-analysis
 
 
-There are **two snakemake files for simulating**:
+In this branch, there are all snakemake-files needed to reproduce the results for the original introUnet-architecture.
 
-*intronets_simulate_training_set_many_samples.smk*: for fixed-size simulations (this means that, e.g., 100k simulations lead to a lower number of final samples because usually many of the samples do not feature any introgression)
+For this purpose **four snakemake files are necessary**:
 
-*intronets_simulate_training_set_fixed_sample_size.smk*: This snakemake-file simulates until the desired number of simulation samples is obtained
+*intronets_simulate_training_replication.smk*: this snake-make creates the h5-file necessary for training (1Mb samples of 50 kB length are simulated, only those with introgression are processed)
 
-In both snakemake files, a new function (*process_simulations*) in *intronets_windows.py* is called; this function distributes the cpus/processes to different simulation batches which are performed in parallel
+*intronets_train_replication.smk*: training of the pytorch-model
+
+*intronets_simulate_prediction_replication.smk*: this snake-make creates the h5-file necessary for prediction (1000 samples of 1Mb length are simulated)
+
+*intronets_infer_replication.smk*: This snakemake-file does inference, precision-recall curves are created
+
+The parameters are given in 
+*config_intronets_archie_replication.yaml*
 
 
 
 ----------------------------
 
-There are **four snakemake files**:  
+In the folders 'scripts_for_testing_only', there are **additional snakemake files**;
+in particular, *intronets_simulate_training_set_many_samples.smk* and *intronets_simulate_training_set_fixed_sample_size.smk*.
+
+For the replication of the introUnet-results, these files can be ignored; they are solely for testing purposes.
+However, *intronets_simulate_training_set_many_samples.smk* implements the structure necessary for the further steps: The simulation process is iterated until enough introgressed samples have been obtained.
 
 
-
-*intronets_simulate_training_set.snake.snake*: creates test files for training (default: 50kB); within a loop, simulation files are created using the sstar-functions, processed (e.g. seriation) and added to a h5-file
-
-
-
-*intronets_simulate_prediction_set.snake*: creates test files for prediciton (default: 1Mb)
-
-*intronets_train.snake*: training of the CNN
-
-*intronets_infer.snake*: prediction using the CNN  
-
-Furthermore, there are various additional scripts of the form *intronets_simulate_training_set_*; these snakemake-files create training data for the various models.
+Furthermore, there are various additional scripts of the form *intronets_simulate_training_set_* in the folder 'additional_train_infer_scripts'; these snakemake-files create training data for the various models. They are for testing purposes and can be ignored.
 The *500k*-versions create samples until 500k windows with introgression are added to the h5-file.
 
-the function parameters are given in 
-config_intronets_archie1.yaml
-config_intronets_archie1_predict.yaml
-However, they are partially overwritten (in particular, the filenames) in the snakemake files
+
+
+
+----------------------------
 
 
 Functions from the following python functions are called:  
