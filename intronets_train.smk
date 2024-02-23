@@ -34,9 +34,9 @@ hdf_filename = config["hdf_filename"]
 total_rep =  config["total_rep"]
 nrep =  config["nrep"]
 
-prefixname = "results/training_data/1000k_random_wo"
+prefixname = "results/training_data/100k_random_wo"
 hdf_filename = prefixname +".h5"
-output_dir = prefixname + "normal_net"
+output_dir = prefixname + "_normal_net"
 
 
 rule all:
