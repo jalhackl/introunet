@@ -11,5 +11,8 @@ hdf_filename = config["hdf_filename"]
 output_dir = config["training_dir"]
 
 rule all:
+    resources:
+        cpus = 2, partition="gpu",
+        time = 2000,
     run:
         train_model_intronets(None, hdf_filename, output_dir, net="default", n_classes=1, pickle_load=False, learning_rate = 0.001, batch_size=32, filter_multiplier=1, label_noise=0.01, n_early=10, label_smooth=True)

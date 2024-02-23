@@ -63,7 +63,10 @@ rule all:
 
 rule create_dataframes_prediction:
     output:
-        output_dataframe = os.path.join(output_dir, hdf_filename)
+        output_dataframe = os.path.join(output_dir, hdf_filename),
+    resources:
+        cpus = 16, partition="basic",
+        time = 3000,
     run:
         os.makedirs(output_dir, exist_ok=True)
         #nrep_folder indicates how many iterations are necessary (each having nrep simulations) to perform the desired number of simulations
