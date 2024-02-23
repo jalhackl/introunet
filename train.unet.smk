@@ -10,7 +10,6 @@ import numpy as np
 configfile: "config_intronets_archie1.yaml"
 
 np.random.seed(config["seed"])
-seed_list = np.random.random_integers(1, 2**31, nrep_folder)
 
 output_dir = config["output_dir"]
 output_prefix = config["output_prefix"]
@@ -18,6 +17,7 @@ nrep = config["nrep"]
 total_rep = config["total_rep"]
 nrep_folder = int(total_rep / nrep)
 nrep_folder_list = [x for x in range(nrep_folder)]
+seed_list = np.random.random_integers(1, 2**31, nrep_folder)
 
 ### Config for rule simulating_training_data
 
@@ -54,11 +54,7 @@ remove_intermediate_data = config["remove_intermediate_data"]
 
 rule all:
     input:
-        output_dir + "/100k_random_wo.h5",
-        output_dir + "/fwbw_100k_random_wo.h5",
-        output_dir + "/gradient_100k_random_wo.h5",
-        output_dir + "/poschannel_100k_random_wo.h5",
-        output_dir + "/poschannel_scaled_100k_random_wo.h5",
+        output_dir + "/100k_random_wo_normal_net/best.weights",
 
 
 rule simulate_training_data:
@@ -129,3 +125,19 @@ rule create_h5_files:
 
             if remove_intermediate_data:
                 shutil.rmtree(f)
+
+
+rule train_unet_model:
+    input:
+        hdf_file = rules.create_h5_files.output.hdf_file,
+    output:
+        weights = output_dir + "/100k_random_wo_normal_net/best.weights",
+    params:
+        output_dir = output_dir + "/100k_random_wo_normal_net",
+    resources:
+        partition = "gpu",
+        time = 1440,
+    run:
+        from intronets_train import train_model_intronets
+
+        train_model_intronets(None, input.hdf_file, params.output_dir, net="default", n_classes=1, pickle_load=False, learning_rate = 0.001, batch_size=32, filter_multiplier=1, label_noise=0.01, n_early=10, label_smooth=True) 
