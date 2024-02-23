@@ -70,8 +70,10 @@ def train_model_intronets(weights, ifile, odir, net="default", n_classes=1, pick
 
     if torch.cuda.is_available():
         device = torch.device('cuda:{}'.format(0))
+        print(f"CUDA is available: version {torch.version.cuda}. Traning on GPU ...")
     else:
         device = torch.device('cpu')
+        print("CUDA is not available. Training on CPU ...")
 
     log_file = open(os.path.join(odir, '{}.log'.format('train')), 'w')
     #config.write(log_file)
