@@ -35,11 +35,11 @@ is_phased = config["is_phased"]
 hdf_filename = config["hdf_filename_prediction"]
 polymorphisms = config["polymorphisms"]
 remove_samples_wo_introgression = False #for prediction, it usually makes no sense to remove samples w/o introgression (except one is especially interested in the performance difference, i.e. whether samples without introgression lead to false positives etc.)
-random_restrict = config["random_restrict"]
+random_restrict = False #for prediction, we want all windows, not a random selection
 no_window = config["no_window"] #if no_window == True, no windowing is applied, but solely one random (or the first) window is chosen
 stepsize = config["stepsize"]
 random_el = config["random_el"]
-only_first = config["only_first"] #if only_first, only the first window is used
+only_first = False #if only_first, only the first window is used; for prediction, this does not make any sense, because we want all windows, not only the first
 return_data = config["return_data"]
 create_extras = config["create_extras"] #if create_extras == True, also h5-files with additional information (position of SNPs, distances between adjacent SNPs, etc. are created)
 remove_intermediate_data = config["remove_intermediate_data"]
