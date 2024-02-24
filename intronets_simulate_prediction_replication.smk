@@ -16,8 +16,8 @@ np.random.seed(config["seed"])
 
 output_dir = config["output_dir_prediction"]
 output_prefix = config["output_prefix"]
-nrep = config["nrep"]
-total_rep = config["total_rep"]
+nrep = config["nrep_prediction"]
+total_rep = config["total_rep_prediction"]
 
 demo_model_file = config["demes"]
 nref = config["nref"]
@@ -45,7 +45,7 @@ create_extras = config["create_extras"] #if create_extras == True, also h5-files
 remove_intermediate_data = config["remove_intermediate_data"]
 
 
-inner_batch_size = config["inner_batch_size"] #inner batch size defines how many simulation folders are created for one iteration
+inner_batch_size = config["inner_batch_size_prediction"] #inner batch size defines how many simulation folders are created for one iteration
 #inner_batch_size should be a divisor of nrep (the number of simulations per iteration)
 #each of the batches is processed by one process / cpu
 #for prediction, (given that we predict longer chromosomes) a low inner_batch_size is preferable 
