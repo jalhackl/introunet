@@ -25,4 +25,4 @@ only_first: True
 return_data: False
 create_extras: True
 remove_intermediate_data: True
-hdf_filename: "100k_random_wo.h5"
+hdf_filename: "1000k_random_wo.h5"

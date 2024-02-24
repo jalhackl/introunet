@@ -68,7 +68,7 @@ rule simulate_training_data:
         output_dir = output_dir + "/100k_random_wo{nrep_folder}",
         seed = lambda wildcards: seed_list[int(wildcards.nrep_folder)],
     resources:
-        cpus = 8, partition="basic,himem",
+        cpus = 8, partition="basic",
     shell:
         """
         sstar simulate --demes {input.demes} --nref {nref} --ntgt {ntgt} --ref-id {ref_id} --tgt-id {tgt_id} --src-id {src_id} --mut-rate {mut_rate} --rec-rate {rec_rate} --seq-len {seq_len} --output-prefix {output_prefix} --output-dir {params.output_dir} --seed {params.seed} --replicate {params.nrep} --thread {resources.cpus} {params.is_phased} --keep-simulated-data
@@ -88,7 +88,7 @@ rule create_h5_files:
     params:
         folders = expand(output_dir + "/100k_random_wo{nrep_folder}", nrep_folder=nrep_folder_list),
     resources:
-        time = 180,
+        time = 1440,
     run:
         import shutil
         from intronets_hdf import create_hdf_table_extrakey_chunk3_windowed, create_hdf_table_extrakey_chunk3_groups
@@ -134,9 +134,12 @@ rule train_unet_model:
         weights = output_dir + "/100k_random_wo_normal_net/best.weights",
     params:
         output_dir = output_dir + "/100k_random_wo_normal_net",
+    benchmark:
+        "benchmarks/100k_random_wo_normal_net.benchmark.txt",
     resources:
         partition = "gpu",
         time = 1440,
+        gres = "--gres=gpu:a30:1",
     run:
         from intronets_train import train_model_intronets
 
