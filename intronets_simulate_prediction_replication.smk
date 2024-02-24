@@ -34,7 +34,7 @@ is_phased = config["is_phased"]
 
 hdf_filename = config["hdf_filename_prediction"]
 polymorphisms = config["polymorphisms"]
-remove_samples_wo_introgression = config["remove_samples_wo_introgression"]
+remove_samples_wo_introgression = False #for prediction, it usually makes no sense to remove samples w/o introgression (except one is especially interested in the performance difference, i.e. whether samples without introgression lead to false positives etc.)
 random_restrict = config["random_restrict"]
 no_window = config["no_window"] #if no_window == True, no windowing is applied, but solely one random (or the first) window is chosen
 stepsize = config["stepsize"]
