@@ -135,7 +135,7 @@ rule train_unet_model:
     params:
         output_dir = output_dir + "/{demog_id}/{output_prefix}_normal_net/batch_size_{batch_size}",
     benchmark:
-        "benchmarks/{demog_id}/{output_prefix}_normal_net_batch_size_{batch_size}.benchmark.txt",
+        repeat("benchmarks/{demog_id}/{output_prefix}_normal_net_batch_size_{batch_size}.benchmark.txt", 3)
     resources:
         partition = "gpu",
         time = 1440,
@@ -143,4 +143,4 @@ rule train_unet_model:
     run:
         from intronets_train import train_model_intronets
 
-        train_model_intronets(None, input.hdf_file, params.output_dir, net="default", n_classes=1, pickle_load=False, learning_rate = 0.001, batch_size=wildcards.batch_size, filter_multiplier=1, label_noise=0.01, n_early=10, label_smooth=True) 
+        train_model_intronets(None, input.hdf_file, params.output_dir, net="default", n_classes=1, pickle_load=False, learning_rate = 0.001, batch_size=int(wildcards.batch_size), filter_multiplier=1, label_noise=0.01, n_early=10, label_smooth=True) 
