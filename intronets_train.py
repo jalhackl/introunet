@@ -61,7 +61,7 @@ import time
 
 
 
-def train_model_intronets(weights, ifile, odir, net="default", n_classes=1, pickle_load=False, learning_rate = 0.001, batch_size=32, filter_multiplier=1, label_noise=0.01, n_early=10, n_epochs = 100, label_smooth=True, polymorphisms=128, compute_prec_rec=True):
+def train_model_intronets(weights, ifile, odir, net="default", n_classes=1, pickle_load=False, learning_rate = 0.001, batch_size=32, filter_multiplier=1, label_noise=0.01, n_early=10, n_epochs = 100, label_smooth=True, polymorphisms=128, compute_prec_rec=False):
     start_time = time.time()
     
     if not os.path.exists(odir):
