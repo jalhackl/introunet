@@ -1,9 +1,12 @@
 seed: 12345
 output_dir: "results/training_data"
-output_prefix: "archie_rep_model"
+output_prefix: "100k_random_wo"
 seq_len: 50000
-nrep: 100
+nrep: 1000
 total_rep: 100000
+
+### Config for rule simulating_training_data
+
 demes: 'ArchIE_3D19.yaml'
 demog_id: 'ArchIE_3D19'
 ploidy: 2
@@ -15,6 +18,9 @@ src_id: 'Ghost'
 nref: 50
 ntgt: 50
 is_phased: True
+
+### Config for rule create_h5_files
+
 polymorphisms: 128
 remove_samples_wo_introgression: True
 random_restrict: True
@@ -25,4 +31,7 @@ only_first: True
 return_data: False
 create_extras: True
 remove_intermediate_data: True
-hdf_filename: "1000k_random_wo.h5"
+batch_sizes:
+    - 32
+    - 64
+    - 128

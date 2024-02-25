@@ -6,7 +6,6 @@ import numpy as np
 
 ## CONFIG
 
-
 configfile: "config_intronets_archie1.yaml"
 
 np.random.seed(config["seed"])
@@ -22,11 +21,12 @@ seed_list = np.random.random_integers(1, 2**31, nrep_folder)
 ### Config for rule simulating_training_data
 
 demo_model_file = config["demes"]
-nref = config["nref"]
-ntgt= config["ntgt"]
+demog_id = config["demog_id"]
 ref_id = config["ref_id"]
 tgt_id = config["tgt_id"]
 src_id = config["src_id"]
+nref = config["nref"]
+ntgt= config["ntgt"]
 seq_len = config["seq_len"]
 mut_rate = config["mut_rate"]
 rec_rate = config["rec_rate"]
@@ -34,8 +34,6 @@ ploidy = config["ploidy"]
 is_phased = config["is_phased"]
 
 ### Config for rule create_h5_files
-
-hdf_filename = config["hdf_filename"]
 
 polymorphisms = config["polymorphisms"]
 remove_samples_wo_introgression = config["remove_samples_wo_introgression"]
@@ -47,6 +45,7 @@ only_first = config["only_first"] #if only_first, only the first window is used
 return_data = config["return_data"]
 create_extras = config["create_extras"] #if create_extras == True, also h5-files with additional information (position of SNPs, distances between adjacent SNPs, etc. are created)
 remove_intermediate_data = config["remove_intermediate_data"]
+batch_size_list = config["batch_sizes"]
 
 
 ## RULES
@@ -54,18 +53,19 @@ remove_intermediate_data = config["remove_intermediate_data"]
 
 rule all:
     input:
-        output_dir + "/100k_random_wo_normal_net/best.weights",
+        expand(output_dir + "/{demog_id}/{output_prefix}_normal_net/batch_size_{batch_size}/best.weights",
+               demog_id=demog_id, output_prefix=output_prefix, batch_size=batch_size_list)
 
 
 rule simulate_training_data:
     input:
         demes = demo_model_file,
     output:
-        flag = output_dir + "/100k_random_wo{nrep_folder}/.sim.completed",
+        flag = output_dir + "/{demog_id}/{output_prefix}_{nrep_folder}/.sim.completed",
     params:
         is_phased = '--phased' if is_phased else '',
         nrep = nrep,
-        output_dir = output_dir + "/100k_random_wo{nrep_folder}",
+        output_dir = output_dir + "/{demog_id}/{output_prefix}_{nrep_folder}",
         seed = lambda wildcards: seed_list[int(wildcards.nrep_folder)],
     resources:
         cpus = 8, partition="basic",
@@ -78,15 +78,15 @@ rule simulate_training_data:
 
 rule create_h5_files:
     input:
-        flags = expand(output_dir + "/100k_random_wo{nrep_folder}/.sim.completed", nrep_folder=nrep_folder_list)
+        lags = expand(output_dir + "/{demog_id}/{output_prefix}_{nrep_folder}/.sim.completed", nrep_folder=nrep_folder_list, allow_missing=True)
     output:
-        hdf_file = output_dir + "/100k_random_wo.h5",
-        fwbw_hdf_file = output_dir + "/fwbw_100k_random_wo.h5",
-        gradient_hdf_file = output_dir + "/gradient_100k_random_wo.h5",
-        poschannel_hdf_file = output_dir + "/poschannel_100k_random_wo.h5",
-        poschannel_scaled_hdf_file = output_dir + "/poschannel_scaled_100k_random_wo.h5",
+        hdf_file = output_dir + "/{demog_id}/{output_prefix}.h5",
+        fwbw_hdf_file = output_dir + "/{demog_id}/fwbw_{output_prefix}.h5",
+        gradient_hdf_file = output_dir + "/{demog_id}/gradient_{output_prefix}.h5",
+        poschannel_hdf_file = output_dir + "/{demog_id}/poschannel_{output_prefix}.h5",
+        poschannel_scaled_hdf_file = output_dir + "/{demog_id}/poschannel_scaled_{output_prefix}.h5",
     params:
-        folders = expand(output_dir + "/100k_random_wo{nrep_folder}", nrep_folder=nrep_folder_list),
+        folders = expand(output_dir + "/{demog_id}/{output_prefix}_{nrep_folder}", nrep_folder=nrep_folder_list, allow_missing=True),
     resources:
         time = 1440,
     run:
@@ -131,11 +131,11 @@ rule train_unet_model:
     input:
         hdf_file = rules.create_h5_files.output.hdf_file,
     output:
-        weights = output_dir + "/100k_random_wo_normal_net/best.weights",
+        weights = output_dir + "/{demog_id}/{output_prefix}_normal_net/batch_size_{batch_size}/best.weights",
     params:
-        output_dir = output_dir + "/100k_random_wo_normal_net",
+        output_dir = output_dir + "/{demog_id}/{output_prefix}_normal_net/batch_size_{batch_size}",
     benchmark:
-        "benchmarks/100k_random_wo_normal_net.benchmark.txt",
+        "benchmarks/{demog_id}/{output_prefix}_normal_net_batch_size_{batch_size}.benchmark.txt",
     resources:
         partition = "gpu",
         time = 1440,
@@ -143,4 +143,4 @@ rule train_unet_model:
     run:
         from intronets_train import train_model_intronets
 
-        train_model_intronets(None, input.hdf_file, params.output_dir, net="default", n_classes=1, pickle_load=False, learning_rate = 0.001, batch_size=32, filter_multiplier=1, label_noise=0.01, n_early=10, label_smooth=True) 
+        train_model_intronets(None, input.hdf_file, params.output_dir, net="default", n_classes=1, pickle_load=False, learning_rate = 0.001, batch_size=wildcards.batch_size, filter_multiplier=1, label_noise=0.01, n_early=10, label_smooth=True) 
