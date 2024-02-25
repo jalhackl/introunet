@@ -88,6 +88,7 @@ rule create_dataframes:
 
         gn = 0
         for i in range(int(nrep_folder)):
+            start_rep = int(i) * int(nrep)
             new_output_dir = output_dir + str(i)
 
 
@@ -101,7 +102,7 @@ rule create_dataframes:
             #process simulation files (seriation etc.)
             #currently, we always use windows (i.e. no_window == False)
             if not no_window:
-                all_entries = process_vcf_df_windowed_multiproc(new_output_dirs, polymorphisms=polymorphisms, stepsize=stepsize, random_reg=random_restrict, random_el=random_el, ignore_zero_introgression=remove_samples_wo_introgression, only_first=only_first, list_of_folders=True)
+                all_entries = process_vcf_df_windowed_multiproc(new_output_dirs, polymorphisms=polymorphisms, stepsize=stepsize, start_rep=start_rep, random_reg=random_restrict, random_el=random_el, ignore_zero_introgression=remove_samples_wo_introgression, only_first=only_first, list_of_folders=True)
             else:
                 all_entries = process_vcf_df_multiproc(new_output_dir, polymorphisms=polymorphisms, remove_samples_wo_introgression=remove_samples_wo_introgression, random_restrict=random_restrict)
 
