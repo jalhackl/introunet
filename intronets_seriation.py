@@ -132,7 +132,119 @@ def apply_lsum_and_seriation_and_sort_multiproc(flattened_array, return_last_ele
     
     return x1, x2, target_array1_sorted
 
+
+
+
+
+def apply_lsum_and_seriation_and_sort_multiproc(flattened_array, return_last_element=True):
+    """
+    Description:
+        function for parallelized application of seriation
+        after processing, the seriated list of arrays is returned
+
+    Arguments:
+        flattened_array list: list containing the following arrays in this order: genotype_array1, genotype_array2, target_array1, ind_array1, ind_array2, target_array2 
+        return_last_element bool: if true, also the positions (stored at the last index of the input array) are returned
+    """
+ 
+    #subentry[1], subentry[0],subentry[3],ind_array1=subentry[6], ind_array2=subentry[5], target_array2=subentry[2]
+    
+    genotype_array1 = flattened_array[0]
+    genotype_array2 = flattened_array[1]
+    target_array1 = flattened_array[2]
+    ind_array1 = flattened_array[3]
+    ind_array2 = flattened_array[4]
+    target_array2 = flattened_array[5]
+
+    x1, x2, genotype_array1_seriated_indices, genotype_array2_seriated_indices =apply_lsum_and_seriation(genotype_array1, genotype_array2)
+    
+
+    
+    target_array1_sorted = target_array1[genotype_array1_seriated_indices]
+    if type(target_array2) != type(None):
+        target_array2_sorted = target_array2[genotype_array2_seriated_indices]
+    
+    if type(ind_array1) != type(None) and type(ind_array2) != type(None):
+        ind_array1_sorted = ind_array1[genotype_array1_seriated_indices]
+        ind_array2_sorted = ind_array2[genotype_array2_seriated_indices]
         
+        
+    if type(target_array2) != type(None) and type(ind_array1) != type(None) and type(ind_array2) != type(None):
+        #return x1, x2, target_array1_sorted, target_array2_sorted, ind_array1_sorted, ind_array2_sorted
+        
+        if return_last_element == False:
+            return x1, x2, target_array1_sorted, target_array2_sorted, ind_array1_sorted, ind_array2_sorted, flattened_array[6], flattened_array[7]
+        else:
+            return x1, x2, target_array1_sorted, target_array2_sorted, ind_array1_sorted, ind_array2_sorted, flattened_array[6], flattened_array[7], flattened_array[-1]
+
+
+    if type(target_array2) != type(None):
+        return x1, x2, target_array1_sorted, target_array2_sorted
+    
+    return x1, x2, target_array1_sorted
+
+
+
+def only_restructure_flattened_array(flattened_array, return_last_element=True):
+    """
+    Description:
+        function for parallelized application of seriation
+        after processing, the seriated list of arrays is returned
+
+    Arguments:
+        flattened_array list: list containing the following arrays in this order: genotype_array1, genotype_array2, target_array1, ind_array1, ind_array2, target_array2 
+        return_last_element bool: if true, also the positions (stored at the last index of the input array) are returned
+    """
+ 
+    #subentry[1], subentry[0],subentry[3],ind_array1=subentry[6], ind_array2=subentry[5], target_array2=subentry[2]
+    
+    x1 = flattened_array[0]
+    x2 = flattened_array[1]
+    target_array1_sorted = flattened_array[2]
+    ind_array1_sorted = flattened_array[3]
+    ind_array2_sorted = flattened_array[4]
+    target_array2_sorted = flattened_array[5]
+
+    target_array2 = target_array2_sorted
+    target_array1 = target_array1_sorted
+
+    ind_array1 = ind_array1_sorted
+    ind_array2 = ind_array2_sorted
+
+
+    '''
+    x1, x2, genotype_array1_seriated_indices, genotype_array2_seriated_indices =apply_lsum_and_seriation(genotype_array1, genotype_array2)
+    
+
+    
+    target_array1_sorted = target_array1[genotype_array1_seriated_indices]
+    if type(target_array2) != type(None):
+        target_array2_sorted = target_array2[genotype_array2_seriated_indices]
+    
+    if type(ind_array1) != type(None) and type(ind_array2) != type(None):
+        ind_array1_sorted = ind_array1[genotype_array1_seriated_indices]
+        ind_array2_sorted = ind_array2[genotype_array2_seriated_indices]
+    '''
+
+
+        
+        
+    if type(target_array2) != type(None) and type(ind_array1) != type(None) and type(ind_array2) != type(None):
+        #return x1, x2, target_array1_sorted, target_array2_sorted, ind_array1_sorted, ind_array2_sorted
+        
+        if return_last_element == False:
+            return x1, x2, target_array1_sorted, target_array2_sorted, ind_array1_sorted, ind_array2_sorted, flattened_array[6], flattened_array[7]
+        else:
+            return x1, x2, target_array1_sorted, target_array2_sorted, ind_array1_sorted, ind_array2_sorted, flattened_array[6], flattened_array[7], flattened_array[-1]
+
+
+    if type(target_array2) != type(None):
+        return x1, x2, target_array1_sorted, target_array2_sorted
+    
+    return x1, x2, target_array1_sorted
+
+
+'''
 def only_restructure_flattened_array(flattened_array, return_last_element=True):
     genotype_array1 = flattened_array[0]
     genotype_array2 = flattened_array[1]
@@ -154,6 +266,7 @@ def only_restructure_flattened_array(flattened_array, return_last_element=True):
         return genotype_array1, genotype_array2, target_array1, target_array2
     
     return genotype_array1, genotype_array2, target_array1
+'''
 
 
 

@@ -477,7 +477,7 @@ def process_vcf_df_windowed(folder, polymorphisms=128, stepsize=16):
 
 
 
-def process_vcf_df_windowed_multiproc(folder, polymorphisms=128, stepsize=16, start_rep=0, only_first=False, random_reg=False, random_el=1, ignore_zero_introgression=True, list_of_folders=False, not_apply_seriation = False):
+def process_vcf_df_windowed_multiproc(folder, polymorphisms=128, stepsize=16, start_rep=0, only_first=False, random_reg=False, random_el=1, ignore_zero_introgression=True, list_of_folders=False, apply_seriation = True):
     """
     Description:
         processes all pairs of vcf- and bed- files in all subdirectories of the input folder
@@ -536,7 +536,7 @@ def process_vcf_df_windowed_multiproc(folder, polymorphisms=128, stepsize=16, st
             #subentry[-1] should be positions - this information can be harnessed later
             flattened_entries.append([subentry[1], subentry[0],subentry[3],subentry[6],subentry[5],subentry[2], subentry[4], subentry[7], subentry[-1]])
 
-    if not_apply_seriation == False:
+    if apply_seriation:
 
         #seriation is done in parallel
         final_array = zip(* pool.map(apply_lsum_and_seriation_and_sort_multiproc, flattened_entries) )
@@ -545,7 +545,11 @@ def process_vcf_df_windowed_multiproc(folder, polymorphisms=128, stepsize=16, st
 
     #in case that we need no seriation, the flattened array only has to be restructured - in this case, probably no parallelization is necessary
     else:
-        final_array = only_restructure_flattened_array(flattened_entries)
+        #final_array = only_restructure_flattened_array(flattened_entries)
+
+        final_array = zip(* pool.map(only_restructure_flattened_array, flattened_entries) )
+
+        final_array = list(zip(* final_array))
 
     return final_array  
 

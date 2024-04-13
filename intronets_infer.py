@@ -6,15 +6,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import h5py
-from layers import *
 from scipy.special import expit
 import pickle
 from sklearn.metrics import roc_curve, roc_auc_score, precision_recall_curve, average_precision_score, confusion_matrix, accuracy_score
 import pandas as pd
-from scipy.interpolate import interp1d
 from evaluate_unet_windowed_orig import gaussian
 
 from intronets_evaluate import *
+
+from layers import NestedUNet
+from additional_layers import *
 
 
 def predict_model_intronets(weights, ifile,  net="default", output_folder="", n_classes=1, chunk_size=4, smooth=False, filter_multiplier=1, sigma = 30, return_full = False, row_wise_addition=True, polymorphisms=128, haplotype_input=True, indiv_cutoff=True):

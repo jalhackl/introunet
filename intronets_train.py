@@ -45,9 +45,7 @@ import torch.utils.data
 import torch.utils.data.distributed
 import copy
 from scipy.special import expit
-from layers import NestedUNet
 from data_loaders import H5UDataGenerator
-import configparser
 import h5py
 from sklearn.metrics import accuracy_score, recall_score, precision_score
 import pandas as pd
@@ -59,7 +57,8 @@ from torch.utils.data import Dataset
 import matplotlib
 import time
 
-
+from layers import NestedUNet
+from additional_layers import *
 
 def train_model_intronets(weights, ifile, odir, net="default", n_classes=1, pickle_load=False, learning_rate = 0.001, batch_size=32, filter_multiplier=1, label_noise=0.01, n_early=10, n_epochs = 100, label_smooth=True, polymorphisms=128, compute_prec_rec=False):
     start_time = time.time()
