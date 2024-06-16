@@ -84,7 +84,7 @@ def get_vcf_bed_folder(folder, ignore_zero_introgression = True, real_data = Fal
 
 
 
-def format_from_vcf_df(vcf_file, bed_file, return_all=True, upsample=112/2, uniform_upsampling=True, ploidy=2, ref_size=50, target_size=50, select_populations=True, merge_haplotypes=False, compute_scaled_positions=False, fragment_length=50000, add_same_number=False):
+def format_from_vcf_df(vcf_file, bed_file, return_all=True, upsample=112/2, uniform_upsampling=True, ploidy=2, ref_size=50, target_size=50, select_populations=True, merge_haplotypes_for_unphased_prediction=False, compute_scaled_positions=False, fragment_length=50000, add_same_number=False):
     """
     Description:
         loading formatting of the input vcf and bed file 
@@ -104,7 +104,9 @@ def format_from_vcf_df(vcf_file, bed_file, return_all=True, upsample=112/2, unif
         bed_file str: folder containing files
     """
     
-    
+    if merge_haplotypes_for_unphased_prediction:
+        ploidy = 1
+
     #'upsample' indicates the total number of individuals per group (reference / target)
     if upsample != None:
         upsample = upsample * ploidy
@@ -119,6 +121,11 @@ def format_from_vcf_df(vcf_file, bed_file, return_all=True, upsample=112/2, unif
     
     
     newar_alt = np.swapaxes(newar.T, 0, 1)
+
+
+    if merge_haplotypes_for_unphased_prediction:
+        newar_alt = np.sum(newar_alt, axis=1)
+        newar_alt = np.expand_dims(newar_alt, axis=1)
 
     
     newsamples_int = [[int(s) for s in newsample.split("_") if s.isdigit()] for newsample in newsamples]
@@ -163,13 +170,14 @@ def format_from_vcf_df(vcf_file, bed_file, return_all=True, upsample=112/2, unif
         curr_start = entry[1]
         curr_end = entry[2]
         
-        
+        if merge_haplotypes_for_unphased_prediction:
+            curr_haplo=0
 
         for ipos, pos in enumerate(newpos):
             if pos >= curr_start and pos < curr_end:
                 
                 intro_array2[curr_ind][curr_haplo][ipos] = 1
-                
+
 
     for ie, entry in enumerate(intro_array2):
         curr_sample = newsamples_int[ie]

@@ -86,7 +86,7 @@ def get_matrices(vcf_file, bed_file, chr_nr=None, polymorphisms=128, stepsize=16
 
 
 
-def get_matrices_multiproc(files, polymorphisms=128, stepsize=16, random_reg=False, random_el=1, remove_samples_wo_introgression=False, only_first=False, return_also_pos = True, only_no_introgression = False, upsample=112/2, ref_size=50, target_size=50):
+def get_matrices_multiproc(files, polymorphisms=128, stepsize=16, random_reg=False, random_el=1, remove_samples_wo_introgression=False, only_first=False, return_also_pos = True, only_no_introgression = False, upsample=112/2, ref_size=50, target_size=50, merge_haplotypes_for_unphased_prediction=False):
     """
     Description:
         returns an array containing:
@@ -117,7 +117,7 @@ def get_matrices_multiproc(files, polymorphisms=128, stepsize=16, random_reg=Fal
     bed_file = files[1]
     chr_nr = files[2]
     
-    pop_df_ref, pop_df_target, intro_df_ref, intro_df_target, newsamples_ref, newsamples_target, newpos = format_from_vcf_df(vcf_file, bed_file, upsample=upsample, ref_size=ref_size, target_size=target_size)
+    pop_df_ref, pop_df_target, intro_df_ref, intro_df_target, newsamples_ref, newsamples_target, newpos = format_from_vcf_df(vcf_file, bed_file, upsample=upsample, ref_size=ref_size, target_size=target_size, merge_haplotypes_for_unphased_prediction=merge_haplotypes_for_unphased_prediction)
     
     pop_df_ref_genotype = pop_df_ref[["genotype"]].to_numpy().squeeze()
     pop_df_target_genotype = pop_df_target[["genotype"]].to_numpy().squeeze()
@@ -159,7 +159,7 @@ def get_matrices_multiproc(files, polymorphisms=128, stepsize=16, random_reg=Fal
                 
                 if remove_samples_wo_introgression == True:
 
-                    if 1 not in np.unique(intro_df_target_genotype_win):
+                    if 1 not in np.unique(intro_df_target_genotype_win) and 2 not in np.unique(intro_df_target_genotype_win):
                         #print("a window without introgression")
                         startpos = startpos + stepsize
 
@@ -168,7 +168,7 @@ def get_matrices_multiproc(files, polymorphisms=128, stepsize=16, random_reg=Fal
                         continue
                 
                 if only_no_introgression == True:
-                    if 1 in np.unique(intro_df_target_genotype_win):                        
+                    if 1 in np.unique(intro_df_target_genotype_win) or 2 in np.unique(intro_df_target_genotype_win):                        
                         startpos = startpos + stepsize
 
                         if only_first == True:
@@ -307,7 +307,7 @@ def process_vcf_df_windowed(folder, polymorphisms=128, stepsize=16):
 
 
 
-def process_vcf_df_windowed_multiproc(folder, polymorphisms=128, stepsize=16, start_rep=0, only_first=False, random_reg=False, random_el=1, ignore_zero_introgression=True, list_of_folders=False, apply_seriation = True, upsample=112/2, ref_size=50, target_size=50):
+def process_vcf_df_windowed_multiproc(folder, polymorphisms=128, stepsize=16, start_rep=0, only_first=False, random_reg=False, random_el=1, ignore_zero_introgression=True, list_of_folders=False, apply_seriation = True, upsample=112/2, ref_size=50, target_size=50, merge_haplotypes_for_unphased_prediction=False):
     """
     Description:
         processes all pairs of vcf- and bed- files in all subdirectories of the input folder
@@ -348,7 +348,7 @@ def process_vcf_df_windowed_multiproc(folder, polymorphisms=128, stepsize=16, st
     files = list(zip(vcf_files, bed_files, counters))
     
     #the windows are extracted in parallel
-    get_matrices_call=partial(get_matrices_multiproc, polymorphisms=polymorphisms, stepsize=stepsize, remove_samples_wo_introgression=ignore_zero_introgression, random_reg=random_reg, random_el=random_el, only_first=only_first, upsample=upsample, ref_size=ref_size, target_size=target_size)
+    get_matrices_call=partial(get_matrices_multiproc, polymorphisms=polymorphisms, stepsize=stepsize, remove_samples_wo_introgression=ignore_zero_introgression, random_reg=random_reg, random_el=random_el, only_first=only_first, upsample=upsample, ref_size=ref_size, target_size=target_size, merge_haplotypes_for_unphased_prediction=merge_haplotypes_for_unphased_prediction)
     
     
     full_array =  pool.map(get_matrices_call, files) 

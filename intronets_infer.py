@@ -18,7 +18,7 @@ from layers import NestedUNet
 from additional_layers import *
 
 
-def predict_model_intronets(weights, ifile,  net="default", output_folder="", n_classes=1, chunk_size=4, smooth=False, filter_multiplier=1, sigma = 30, return_full = False, row_wise_addition=True, polymorphisms=128, haplotype_input=True, indiv_cutoff=True):
+def predict_model_intronets(weights, ifile,  net="default", output_folder="", n_classes=1, chunk_size=4, smooth=False, filter_multiplier=1, sigma = 30, return_full = False, row_wise_addition=True, polymorphisms=128, haplotype_input=True, indiv_cutoff=False, create_confusion_matrices = True):
     if torch.cuda.is_available():
         device = torch.device('cuda')
     else:
@@ -247,7 +247,6 @@ def predict_model_intronets(weights, ifile,  net="default", output_folder="", n_
     full_ypred_final =expit(np.array(full_ypred).flatten())
 
     from sklearn.metrics import precision_recall_curve
-    precision_simple, recall_simple, thresholds_simple = precision_recall_curve(np.array(full_ytrue).flatten(), full_ypred_final, drop_intermediate=True)
     #weight_folder_name = weights.split('/')[0]
     weight_folder_split = weights.split('/')
     if len(weight_folder_split) == 2:
@@ -255,12 +254,7 @@ def predict_model_intronets(weights, ifile,  net="default", output_folder="", n_
     else:
         weight_folder_name = ""
 
-    plt.plot(recall_simple, precision_simple)
-    plt.xlabel("recall")
-    plt.ylabel("precision")
-    plt.legend()
-    plt.savefig(os.path.join(output_folder, filename.split('.')[0] + "_simple_eval_" + weight_folder_name + ".png"))
-    plt.figure()
+
 
     #preparing final arrays
 
@@ -282,11 +276,107 @@ def predict_model_intronets(weights, ifile,  net="default", output_folder="", n_
 
     precision, recall, thresholds = precision_recall_curve(full_arr_true_flattened_nonzero, final_expit, drop_intermediate=True)
 
+
+    if create_confusion_matrices:
+        f1_scores = 2 * (precision * recall) / (precision + recall)
+
+        best_threshold_index = np.argmax(f1_scores)
+
+        best_threshold = thresholds[best_threshold_index]
+
+        predicted_labels = (final_expit >= best_threshold).astype(int)
+
+        #conf_matrix = confusion_matrix(full_arr_true_flattened_nonzero, predicted_labels)
+
+        best_confusion_file = filename.split('.')[0] + weight_folder_name + "_conf_best_" +str(best_threshold) + "_" +  ".png"
+
+        from sklearn.metrics import ConfusionMatrixDisplay
+
+        subset_1 = final_expit[full_arr_true_flattened_nonzero == 1]
+        subset_0 = final_expit[full_arr_true_flattened_nonzero == 0]
+
+        import seaborn as sns
+
+        plt.hist(subset_0, density = True, bins=50, alpha=0.6, label="class 0")
+        if len(subset_1) > 0:
+            plt.hist(subset_1, density = True, bins=50, alpha=0.6, label="class 1")
+        plt.legend()
+
+        plt.savefig(filename.split('.')[0] + weight_folder_name + "_histogram.png")
+        plt.show()
+        plt.clf()
+        plt.close()
+
+        #sns.set_style('whitegrid')
+        sns.kdeplot(np.array(subset_0), clip=(0, None), bw=0.5, label="class 0")
+        if len(subset_1) > 0:
+            sns.kdeplot(np.array(subset_1), clip=(0, None), bw=0.5, label="class 1")
+        plt.legend()
+
+        plt.savefig( filename.split('.')[0] + weight_folder_name + "_density.png")
+        plt.show()
+        plt.clf()
+        plt.close()
+
+
+
+        disp = ConfusionMatrixDisplay.from_predictions(full_arr_true_flattened_nonzero, predicted_labels)
+        disp.ax_.set_title('Confusion Matrix, best cutoff = ' + str(best_threshold))
+
+        plt.savefig(best_confusion_file)
+        
+        plt.show()
+        plt.clf()
+        plt.close()
+
+        o99_confusion_file = filename.split('.')[0] + weight_folder_name + "_conf_" + str(99) + "_" +  ".png"
+        predicted_labels = (final_expit >= 0.99).astype(int)
+
+        #conf_matrix_o99 = confusion_matrix(full_arr_true_flattened_nonzero, predicted_labels)
+        disp = ConfusionMatrixDisplay.from_predictions(full_arr_true_flattened_nonzero, predicted_labels)
+        disp.ax_.set_title('Confusion Matrix, cutoff = ' + str(0.99))
+        plt.savefig(o99_confusion_file)
+        plt.show()
+        plt.clf()
+        plt.close()
+
+
+        o50_confusion_file = filename.split('.')[0] + weight_folder_name + "_conf_" + str(50) + "_" +  ".png"
+        predicted_labels = (final_expit >= 0.50).astype(int)
+
+        #conf_matrix_o50 = confusion_matrix(full_arr_true_flattened_nonzero, predicted_labels)
+        disp = ConfusionMatrixDisplay.from_predictions(full_arr_true_flattened_nonzero, predicted_labels)
+        disp.ax_.set_title('Confusion Matrix, cutoff = ' + str(0.50))
+        plt.savefig(o50_confusion_file)
+        plt.show()
+        plt.clf()
+        plt.close()
+
+
+
+
+    precision_simple, recall_simple, thresholds_simple = precision_recall_curve(np.array(full_ytrue).flatten(), full_ypred_final, drop_intermediate=True)
+
+    plt.plot(recall_simple, precision_simple)
+    plt.xlabel("recall")
+    plt.ylabel("precision")
+    plt.legend()
+    plt.savefig(os.path.join(output_folder, filename.split('.')[0] + "_simple_eval_" + weight_folder_name + ".png"))
+    plt.show()
+    plt.clf()
+    plt.close()
+
+    
     plt.plot(recall, precision)
     plt.xlabel("recall")
     plt.ylabel("precision")
     plt.legend()
     plt.savefig(os.path.join(filename.split('.')[0] + "_full_eval" + weight_folder_name + ".png"))
+    plt.show()
+    plt.clf()
+    plt.close()
+
+
 
     prec_recall_file = filename.split('.')[0] + "_full_eval" + weight_folder_name + ".pickle"
     prec_recall_file_simple = filename.split('.')[0] + "_simple_eval" + weight_folder_name + ".pickle"
